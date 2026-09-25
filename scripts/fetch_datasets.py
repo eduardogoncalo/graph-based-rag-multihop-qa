@@ -92,16 +92,16 @@ FICHEIROS: dict[str, list[dict]] = {
             "destino": "musique/musique_ans_v1.0_dev.jsonl",
             "sha256": "15fa63794d18a94ce12411aca6e2327e65b6e83b0b1490efab3f1962e48abf3b",
             "bytes": 30439728,
-            "porque": "as 1000 perguntas de avaliação saem daqui, por random.Random(42).sample",
+            "porque": "the 1000 evaluation questions are drawn from here, via random.Random(42).sample",
             "urls": [
                 _HF.format(repo="voidful/MuSiQue", ficheiro="musique_ans_v1.0_dev.jsonl"),
                 _HF.format(repo="dgslibisey/MuSiQue", ficheiro="musique_ans_v1.0_dev.jsonl"),
                 _HF.format(repo="bdsaglam/musique", ficheiro="musique_ans_v1.0_dev.jsonl"),
             ],
             "manual": (
-                "Descarregue musique_v1.0.zip de "
+                "Download musique_v1.0.zip from "
                 "https://drive.google.com/file/d/1tGdADlNjWFaHLeZZGShh2IRcpO6Lv24h/view "
-                "e coloque o musique_ans_v1.0_dev.jsonl de dentro dele em {destino}"
+                "and put the musique_ans_v1.0_dev.jsonl inside it at {destino}"
             ),
         },
     ],
@@ -110,44 +110,44 @@ FICHEIROS: dict[str, list[dict]] = {
             "destino": "2wikimultihop/2wikimultihopqa.json",
             "sha256": "895cba294064df0c3302c76847b1fc08d99b5619f7663dfaa3b65cd780f1cac4",
             "bytes": 6505789,
-            "porque": "as EXACTAS 1000 perguntas que o HippoRAG 2 avaliou",
+            "porque": "the EXACT 1000 questions HippoRAG 2 evaluated",
             "urls": [_HIPPORAG.format(ficheiro="2wikimultihopqa.json")],
             "manual": (
-                "Copie reproduce/dataset/2wikimultihopqa.json do repositório "
-                "OSU-NLP-Group/HippoRAG para {destino}"
+                "Copy reproduce/dataset/2wikimultihopqa.json from the "
+                "OSU-NLP-Group/HippoRAG repository to {destino}"
             ),
         },
         {
             "destino": "2wikimultihop/2wikimultihopqa_corpus.json",
             "sha256": "9d6e352952aafb18dab22bf8195039461321a44a949df902ae83bce134ad238a",
             "bytes": 3083943,
-            "porque": "o corpus de 6.119 passagens; os Documents vêm daqui",
+            "porque": "the 6,119-passage corpus; the Documents come from here",
             "urls": [_HIPPORAG.format(ficheiro="2wikimultihopqa_corpus.json")],
             "manual": (
-                "Copie reproduce/dataset/2wikimultihopqa_corpus.json do repositório "
-                "OSU-NLP-Group/HippoRAG para {destino}"
+                "Copy reproduce/dataset/2wikimultihopqa_corpus.json from the "
+                "OSU-NLP-Group/HippoRAG repository to {destino}"
             ),
         },
         {
             "destino": "2wikimultihop/dev.json",
             "sha256": "79f77ae104088ea8e25b1a65dbece768d45771194663bc5660ec9a98070dadf5",
             "bytes": 57614142,
-            "porque": "recupera supporting_facts e type por _id, ausentes no ficheiro do HippoRAG",
+            "porque": "recovers supporting_facts and type by _id, missing from the HippoRAG file",
             "zip": _ZIP_2WIKI,
             "membro": "dev.json",
             "manual": (
-                "Descarregue {zip_url} e coloque o dev.json de dentro dele em {destino}"
+                "Download {zip_url} and put the dev.json inside it at {destino}"
             ),
         },
         {
             "destino": "2wikimultihop/id_aliases.json",
             "sha256": "f08ffcb6c2cefca9bdbe86b4248d6ad7a7743762d3f7264c14ff0bae85726fb6",
             "bytes": 17501406,
-            "porque": "aliases de resposta por answer_id (Wikidata)",
+            "porque": "answer aliases by answer_id (Wikidata)",
             "zip": _ZIP_2WIKI,
             "membro": "id_aliases.json",
             "manual": (
-                "Descarregue {zip_url} e coloque o id_aliases.json de dentro dele em {destino}"
+                "Download {zip_url} and put the id_aliases.json inside it at {destino}"
             ),
         },
     ],
@@ -234,13 +234,13 @@ def _obter_zip(zip_info: dict, cache: Path) -> Path:
         try:
             _verificar(arquivo, sha256=zip_info["sha256"], esperado_bytes=zip_info["bytes"])
         except DescarregamentoFalhouError:
-            log(f"    arquivo em cache não confere, a descarregar de novo: {arquivo}")
+            log(f"    cached archive does not match, downloading again: {arquivo}")
             arquivo.unlink()
         else:
-            log(f"    arquivo já em cache: {arquivo}")
+            log(f"    archive already cached: {arquivo}")
             return arquivo
 
-    log(f"    a descarregar {zip_info['nome']} ({zip_info['bytes'] // (1 << 20)} MB)")
+    log(f"    downloading {zip_info['nome']} ({zip_info['bytes'] // (1 << 20)} MB)")
     _descarregar_para(zip_info["url"], arquivo, esperado_bytes=zip_info["bytes"])
     _verificar(arquivo, sha256=zip_info["sha256"], esperado_bytes=zip_info["bytes"])
     return arquivo
@@ -254,7 +254,7 @@ def _extrair_do_zip(arquivo: Path, membro: str, destino: Path) -> None:
             candidatos = [n for n in nomes if n.endswith("/" + membro)]
             if not candidatos:
                 raise DescarregamentoFalhouError(
-                    f"{arquivo.name} não contém {membro}. Tem: {', '.join(nomes[:10])}"
+                    f"{arquivo.name} does not contain {membro}. It has: {', '.join(nomes[:10])}"
                 )
             membro = candidatos[0]
         with zf.open(membro) as origem, tempfile.NamedTemporaryFile(
@@ -274,81 +274,81 @@ def _tratar_ficheiro(
     esperado_bytes = entrada["bytes"]
 
     log(f"  {entrada['destino']}")
-    log(f"    porquê: {entrada['porque']}")
+    log(f"    why: {entrada['porque']}")
 
     if destino.is_file() and not force:
         try:
             _verificar(destino, sha256=sha256, esperado_bytes=esperado_bytes)
         except DescarregamentoFalhouError as erro:
             raise DescarregamentoFalhouError(
-                f"{destino} já existe e não confere.\n    {erro}\n"
-                "    Apague-o, ou corra com --force para o substituir."
+                f"{destino} already exists and does not match.\n    {erro}\n"
+                "    Delete it, or run with --force to replace it."
             ) from erro
-        log("    já lá está e confere")
+        log("    already present and matches")
         return "ok"
 
     if verify_only:
         raise DescarregamentoFalhouError(
-            f"{destino} não existe. Corra sem --verify-only para o descarregar."
+            f"{destino} does not exist. Run without --verify-only to download it."
         )
 
     erros: list[str] = []
 
     if "zip" in entrada:
         arquivo = _obter_zip(entrada["zip"], cache)
-        log(f"    a extrair {entrada['membro']}")
+        log(f"    extracting {entrada['membro']}")
         _extrair_do_zip(arquivo, entrada["membro"], destino)
     else:
         for url in entrada["urls"]:
-            log(f"    a descarregar de {url.split('/')[2]}")
+            log(f"    downloading from {url.split('/')[2]}")
             try:
                 _descarregar_para(url, destino, esperado_bytes=esperado_bytes)
                 break
             except (urllib.error.URLError, OSError, TimeoutError) as erro:
                 erros.append(f"{url}: {erro}")
-                log(f"      falhou: {erro}")
+                log(f"      failed: {erro}")
         else:
             manual = entrada["manual"].format(destino=destino, zip_url="")
             raise DescarregamentoFalhouError(
-                "Nenhuma origem serviu para "
+                "No source worked for "
                 f"{entrada['destino']}:\n      " + "\n      ".join(erros) + "\n"
-                f"    À mão: {manual}"
+                f"    By hand: {manual}"
             )
 
     _verificar(destino, sha256=sha256, esperado_bytes=esperado_bytes)
-    log("    descarregado e confere")
+    log("    downloaded and matches")
     return "descarregado"
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(
-        description="Descarrega os ficheiros brutos do MuSiQue e do 2WikiMultiHopQA.",
+        description="Download the raw MuSiQue and 2WikiMultiHopQA files.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "Depois disto: `benchmark ingest --dataset musique --version "
-            "ans_v1.0_eval1k`, que verifica a impressão digital da amostra."
+            "After this: `benchmark ingest --dataset musique --version "
+            "ans_v1.0_eval1k`, which checks the sample's fingerprint."
         ),
     )
     ap.add_argument(
         "--dataset",
         choices=[*sorted(FICHEIROS), "all"],
         default="all",
-        help="Qual descarregar. Por omissão, os dois.",
+        help="Which one to download. Default: both.",
     )
     ap.add_argument(
         "--data-dir",
         default="data/raw",
-        help="Onde escrever. Por omissão data/raw, que é o que os configs esperam.",
+        help="Where to write. Default data/raw, which is what the configs expect.",
     )
     ap.add_argument(
         "--verify-only",
         action="store_true",
-        help="Só verifica o que já lá está; não descarrega nada.",
+        help="Only verify what is already there; download nothing.",
     )
     ap.add_argument(
         "--force",
         action="store_true",
-        help="Volta a descarregar mesmo que o ficheiro já esteja bom.",
+        help="Download again even if the file is already good.",
     )
     args = ap.parse_args()
 
@@ -373,25 +373,25 @@ def main() -> int:
                     force=args.force,
                 )] += 1
             except DescarregamentoFalhouError as erro:
-                log(f"    ERRO: {erro}")
+                log(f"    ERROR: {erro}")
                 falhas.append(entrada["destino"])
 
     total = contagem["ok"] + contagem["descarregado"]
     log(
-        f"\n{total} ficheiros prontos "
-        f"({contagem['descarregado']} descarregados, {contagem['ok']} já existiam)"
+        f"\n{total} files ready "
+        f"({contagem['descarregado']} downloaded, {contagem['ok']} already present)"
     )
 
     if falhas:
-        log(f"{len(falhas)} por resolver: {', '.join(falhas)}")
+        log(f"{len(falhas)} unresolved: {', '.join(falhas)}")
         return 1
 
     arquivo_em_cache = cache / _ZIP_2WIKI["nome"]
     if arquivo_em_cache.is_file():
-        log(f"\nPode apagar o arquivo em cache, já não é preciso: {arquivo_em_cache}")
+        log(f"\nYou can delete the cached archive, it is no longer needed: {arquivo_em_cache}")
 
     log(
-        "\nA seguir, e é o que confirma que os ficheiros são os certos:\n"
+        "\nNext, and this is what confirms the files are the right ones:\n"
         "  benchmark ingest --dataset musique --version ans_v1.0_eval1k\n"
         "  benchmark ingest --dataset twowiki --version ans_v1.0_eval1k"
     )

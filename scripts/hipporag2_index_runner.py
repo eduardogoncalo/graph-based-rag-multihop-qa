@@ -101,12 +101,12 @@ def exigir_workspace_vazio(save_dir: Path, *, reset: bool = False) -> None:
     if not conteudo:
         return
     raise WorkspaceJaUsadoError(
-        f"--save-dir {save_dir} já tem conteúdo ({', '.join(conteudo[:5])}"
-        f"{'...' if len(conteudo) > 5 else ''}) e este runner não retoma: "
-        f"chamar index() sobre um índice existente volta a derivar as arestas e "
-        f"duplica-as (19.392.908 arestas para 319.817 pares, medido a "
-        f"2026-08-09). Use --reset para recomeçar do zero, ou aponte --save-dir "
-        f"a um destino novo."
+        f"--save-dir {save_dir} already has content ({', '.join(conteudo[:5])}"
+        f"{'...' if len(conteudo) > 5 else ''}) and this runner does not resume: "
+        f"calling index() on an existing index derives the edges again and "
+        f"duplicates them (19,392,908 edges for 319,817 pairs, measured on "
+        f"2026-08-09). Use --reset to start from scratch, or point --save-dir "
+        f"at a new destination."
     )
 
 
@@ -165,7 +165,7 @@ def main() -> int:
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="apaga o --save-dir antes de indexar. Explícito e destrutivo.",
+        help="delete --save-dir before indexing. Explicit and destructive.",
     )
     args = parser.parse_args()
 
@@ -185,7 +185,7 @@ def main() -> int:
             record = json.loads(line)
             docs.append((record["document_id"], record["text"]))
     window = docs[args.skip : (args.skip + args.limit) if args.limit else None]
-    log(f"corpus={len(docs)} janela=[{args.skip}:{args.skip + len(window)}]")
+    log(f"corpus={len(docs)} window=[{args.skip}:{args.skip + len(window)}]")
 
     passage_map: dict[str, str] = {}
     if map_path.exists():

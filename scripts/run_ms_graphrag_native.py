@@ -1,19 +1,19 @@
-"""GraphRAG NATIVO (Braço B, "as deployed") — MS GraphRAG responde por si.
+"""NATIVE GraphRAG (Arm B, "as deployed") — MS GraphRAG answers on its own.
 
-Roda a geração PRÓPRIA do MS GraphRAG (`engine.search()` via
-`graphrag_query_runner.py --generate`) sobre as 1000 MuSiQue eval1k e materializa
-como `musique_eval1k_ms_graphrag_native`. Análogo ao run_cognee_native.py.
+Runs MS GraphRAG's OWN generation (`engine.search()` via
+`graphrag_query_runner.py --generate`) over the 1000 MuSiQue eval1k questions and
+materializes it as `musique_eval1k_ms_graphrag_native`. Analogous to run_cognee_native.py.
 
-Diferença vs o Braço A (controlado): lá o GraphRAG só entrega CONTEXTO e o nosso
-reader gera; aqui é a geração NATIVA do próprio GraphRAG (local/global search com LLM).
-Modelo interno = gpt-4o-mini (config do índice). `--method local` = default (fato-cêntrico,
-certo p/ QA multi-hop; global = temático).
+Difference vs Arm A (controlled): there GraphRAG only supplies CONTEXT and our
+reader generates; here it is GraphRAG's own NATIVE generation (local/global search with an LLM).
+Internal model = gpt-4o-mini (index config). `--method local` = default (fact-centric,
+right for multi-hop QA; global = thematic).
 
-Modos:
-  --smoke [N]  amostra estratificada por hop (8/5/2 = 15); gera as nativas, escreve
-               JSONL + gate; NÃO escreve nas tabelas do benchmark.
-  --full       todas as 1000; persiste em musique_eval1k_ms_graphrag_native (idempotente,
-               resumível por question_id). Judge é passo separado (run_llm_judge.py).
+Modes:
+  --smoke [N]  hop-stratified sample (8/5/2 = 15); generates native answers, writes
+               JSONL + gate; does NOT write to the benchmark tables.
+  --full       all 1000; persists to musique_eval1k_ms_graphrag_native (idempotent,
+               resumable by question_id). The judge is a separate step (run_llm_judge.py).
 """
 
 from __future__ import annotations
@@ -117,7 +117,7 @@ def run_smoke(n: int, method: str) -> bool:
     sample = _smoke_sample(_load_questions())
     if n != sum(SMOKE_STRATA.values()):
         sample = sample[:n]
-    print(f"[smoke] {len(sample)} perguntas (method={method}); "
+    print(f"[smoke] {len(sample)} questions (method={method}); "
           f"hops={ {h: sum(1 for q in sample if _hop_of(q)==h) for h in SMOKE_STRATA} }", flush=True)
     adapter = _ms_graphrag_adapter(DATASET_ID, DATASET_VERSION)
     rows = []
@@ -133,8 +133,8 @@ def run_smoke(n: int, method: str) -> bool:
     non_empty = sum(1 for r in rows if r["answer_len"] > 0)
     gold_hits = sum(1 for r in rows if _gold_hit(r))
     gates = {
-        "0 falhas técnicas": tech_fail == 0,
-        "todas as respostas não-vazias": non_empty == len(rows),
+        "0 technical failures": tech_fail == 0,
+        "all answers non-empty": non_empty == len(rows),
     }
     passed = all(gates.values())
     (REPORTS / "ms_graphrag_native_smoke.jsonl").write_text(
@@ -142,8 +142,8 @@ def run_smoke(n: int, method: str) -> bool:
     print()
     for name, ok in gates.items():
         print(f"[gate] {'PASS' if ok else 'FAIL'}  {name}")
-    print(f"[smoke] gold-hit grosseiro (informativo): {gold_hits}/{len(rows)}")
-    print(f"[smoke] latência média: {sum(r['latency_ms'] for r in rows)/max(len(rows),1)/1000:.1f}s")
+    print(f"[smoke] rough gold-hit (informational): {gold_hits}/{len(rows)}")
+    print(f"[smoke] mean latency: {sum(r['latency_ms'] for r in rows)/max(len(rows),1)/1000:.1f}s")
     print(f"[smoke] GATE {'PASS' if passed else 'FAIL'}")
     return passed
 
@@ -172,17 +172,17 @@ def run_full(method: str, limit: int | None = None) -> None:
     )
     if limit:
         todo = todo[:limit]
-    print(f"[full] {len(questions)} perguntas · {len(done)} já feitas · {len(todo)} nesta sessão "
-          f"(method={method}{f', limite={limit}' if limit else ''})", flush=True)
+    print(f"[full] {len(questions)} questions · {len(done)} already done · {len(todo)} this session "
+          f"(method={method}{f', limit={limit}' if limit else ''})", flush=True)
     if not todo:
-        print("[full] nada a fazer", flush=True); conn.close(); return
+        print("[full] nothing to do", flush=True); conn.close(); return
 
     adapter = _ms_graphrag_adapter(DATASET_ID, DATASET_VERSION)
     written = empties = 0
     for i, q in enumerate(todo, 1):
         row = _generate_one(adapter, q, method)
         if row["status"] == "error":
-            print(f"[full] ERRO {q['question_id']}: {row['error']} — abortando", flush=True)
+            print(f"[full] ERROR {q['question_id']}: {row['error']} — aborting", flush=True)
             raise SystemExit(1)
         if row["answer_len"] == 0:
             empties += 1
@@ -199,8 +199,8 @@ def run_full(method: str, limit: int | None = None) -> None:
         conn.commit()
         written += 1
         if i % 25 == 0 or i == len(todo):
-            print(f"[full] {i}/{len(todo)} gravadas ({empties} vazias) últ.: {row['latency_ms']/1000:.1f}s", flush=True)
-    print(f"[full] concluído: {written} gravadas em {TARGET_EXP} ({empties} vazias)", flush=True)
+            print(f"[full] {i}/{len(todo)} written ({empties} empty) last: {row['latency_ms']/1000:.1f}s", flush=True)
+    print(f"[full] done: {written} written to {TARGET_EXP} ({empties} empty)", flush=True)
     conn.close()
 
 

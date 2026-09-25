@@ -31,7 +31,7 @@ INK, MUT, SURFACE = "#1f1f1e", "#6b6a66", "#fcfcfb"
 def load(reports: Path, name_hint: str) -> dict:
     cands = sorted(reports.glob("consolidated_p5_*.json"))
     if not cands:
-        raise SystemExit(f"consolidated_p5 não encontrado em {reports}")
+        raise SystemExit(f"consolidated_p5 not found in {reports}")
     return json.loads(cands[-1].read_text())
 
 
@@ -125,7 +125,7 @@ def main() -> None:
     h = 0.36
     for ax, arm, title in zip(
         axes, ("controlado", "nativo"),
-        ("Braço A (controlado, reader fixo)", "Braço B (nativo, as deployed)"),
+        ("Arm A (controlled, fixed reader)", "Arm B (native, as deployed)"),
     ):
         for s in ("top", "right", "left"):
             ax.spines[s].set_visible(False)
@@ -147,7 +147,7 @@ def main() -> None:
         ax.set_xlim(0, 0.85)
         ax.set_title(title, fontsize=10, color=INK)
         ax.tick_params(colors=MUT, labelcolor=INK)
-    axes[0].set_xlabel("strict (judge gpt-4o); tracejado = baseline denso do dataset",
+    axes[0].set_xlabel("strict (judge gpt-4o); dashed = dataset's dense baseline",
                        fontsize=8, color=MUT)
     axes[1].legend(loc="lower right", fontsize=8, frameon=True)
     fig.tight_layout()
@@ -155,7 +155,7 @@ def main() -> None:
     plt.close(fig)
 
     # ---- stdout ----
-    print("=== 4 leituras (família A, substrato vs denso) ===")
+    print("=== 4 readings (family A, substrate vs dense) ===")
     for r in readings:
         m, t = r["musique"], r["twowiki"]
         print(f"  {r['pair']:28} musique Δ={m['delta']:+.3f} sig={m['sig']} | "
@@ -165,7 +165,7 @@ def main() -> None:
         m, t = r["musique"], r["twowiki"]
         print(f"  {r['pair']:32} musique Δ={m['delta']:+.3f} sig={m['sig']} | "
               f"2wiki Δ={t['delta']:+.3f} sig={t['sig']}")
-    print("=== ordenações (strict) ===")
+    print("=== orderings (strict) ===")
     for k, v in orders.items():
         print(f"  {k:20} {' > '.join(v)}")
     print(f"\n-> {OUT}/cross_dataset_consolidated.json\n-> {OUT}/fig_cross_dataset_arms.png")

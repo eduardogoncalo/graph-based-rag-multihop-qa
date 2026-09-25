@@ -393,7 +393,7 @@ def main() -> int:
     ap.add_argument("--workspace", required=True, help="throwaway dir for cognee local stores")
     ap.add_argument("--out-dir", required=True, help="durable dir for ledger/usage/report")
     ap.add_argument("--dataset-name", default="musique_shakeout")
-    ap.add_argument("--bolt", required=True, help="URI Bolt do Neo4j alvo. Sem valor por omissao de proposito: o antigo apontava ao grafo do ambiente original.")
+    ap.add_argument("--bolt", required=True, help="Bolt URI of the target Neo4j. No default on purpose: the old one pointed at the original environment's graph.")
     ap.add_argument("--password", default="benchmark_cognee")
     ap.add_argument("--llm-model", default="gpt-4o-mini")
     ap.add_argument("--embedding-model", default="text-embedding-3-small")

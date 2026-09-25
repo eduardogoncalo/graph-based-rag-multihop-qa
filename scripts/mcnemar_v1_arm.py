@@ -103,12 +103,12 @@ def main() -> None:
         "--suffix-override",
         action="append",
         default=[],
-        metavar="ANTIGO=NOVO",
-        help="troca um sufixo de célula, por exemplo "
-        "hipporag2_v1free=hipporag2_v1free_official. Repetível. Só muda QUAIS "
-        "células entram, nunca como o teste é calculado.",
+        metavar="OLD=NEW",
+        help="swap a cell suffix, for example "
+        "hipporag2_v1free=hipporag2_v1free_official. Repeatable. Only changes WHICH "
+        "cells are included, never how the test is computed.",
     )
-    ap.add_argument("--out-tag", default="", help="sufixo do ficheiro de saída")
+    ap.add_argument("--out-tag", default="", help="output file suffix")
     args = ap.parse_args()
     prefix = args.exp_prefix
     reports_dir = Path(args.reports_dir)
@@ -121,7 +121,7 @@ def main() -> None:
         globals()["SECONDARY_SUFFIX"] = [
             (mapping.get(a, a), mapping.get(b, b)) for a, b in SECONDARY_SUFFIX
         ]
-        print(f"sufixos trocados: {mapping}")
+        print(f"suffixes swapped: {mapping}")
 
     connection = connect_postgres(load_settings())
     cursor = connection.cursor()

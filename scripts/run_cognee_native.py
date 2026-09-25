@@ -1,31 +1,31 @@
-"""P2 (Braço B) — cognee NATIVO ("as deployed").
+"""P2 (Arm B) — NATIVE cognee ("as deployed").
 
-Roda a geração PRÓPRIA do cognee (GRAPH_COMPLETION com only_context=False) sobre as
-1000 perguntas MuSiQue eval1k e materializa como experimento
-`musique_eval1k_cognee_native`. É o segundo ponto do Braço B (o primeiro foi o
-lightrag nativo / P1).
+Runs cognee's OWN generation (GRAPH_COMPLETION with only_context=False) over the
+1000 MuSiQue eval1k questions and materializes it as the experiment
+`musique_eval1k_cognee_native`. It is the second point of Arm B (the first was
+native lightrag / P1).
 
-Diferença crucial vs P1: o cognee rodou o braço controlado com only_context=True e
-NUNCA gerou uma resposta nativa (0 chamadas LLM na consulta). Então aqui NÃO é ETL —
-é geração real: 1 chamada gpt-4o-mini por pergunta, feita DENTRO do cognee (o
-completion step do GraphCompletionRetriever). A resposta sai em
-`retrieval.metadata["generated_answer"]` (já extraída pelo parser).
+Key difference vs P1: cognee ran the controlled arm with only_context=True and
+NEVER generated a native answer (0 LLM calls at query time). So this is NOT ETL,
+it is real generation: 1 gpt-4o-mini call per question, made INSIDE cognee (the
+completion step of GraphCompletionRetriever). The answer comes out in
+`retrieval.metadata["generated_answer"]` (already extracted by the parser).
 
-top_k = 10 = DEFAULT da API `recall()` do cognee 1.1.2 ("as deployed"), NÃO o k=5
-imposto ao braço controlado para parear com vector/lightrag. Os demais knobs
-(wide_search_top_k=100, neighborhood_seed_top_k, global_context_index_top_k...) ficam
-nos defaults nativos do cognee — o adapter só passa top_k, os outros o cognee resolve.
+top_k = 10 = DEFAULT of cognee 1.1.2's `recall()` API ("as deployed"), NOT the k=5
+imposed on the controlled arm to match vector/lightrag. The other knobs
+(wide_search_top_k=100, neighborhood_seed_top_k, global_context_index_top_k...) stay
+at cognee's native defaults; the adapter only passes top_k, cognee resolves the rest.
 
-Infra: lê o índice local Option C (Neo4j bolt 17689 + sqlite + lancedb sob o
-workspace), via benchmark.methods.cognee.option_c.resolve_cognee_config. Modelo interno
-= gpt-4o-mini (mesmo do braço A). Rode a partir do .venv (mesmo caminho da avaliação
-controlada), com .env exportado e os envs Neo4j de lightrag/graphrag limpos.
+Infra: reads the local Option C index (Neo4j bolt 17689 + sqlite + lancedb under the
+workspace), via benchmark.methods.cognee.option_c.resolve_cognee_config. Internal model
+= gpt-4o-mini (same as Arm A). Run from the .venv (same path as the controlled
+evaluation), with .env exported and the lightrag/graphrag Neo4j env vars cleared.
 
-Modos:
-  --smoke [N]   amostra estratificada por hop (seed 42, default 15); gera as nativas,
-                escreve JSONL + relatório de gate; NÃO escreve nas tabelas do benchmark.
-  --full        todas as 1000; persiste em musique_eval1k_cognee_native (idempotente,
-                resumível por question_id). O judge é passo separado
+Modes:
+  --smoke [N]   hop-stratified sample (seed 42, default 15); generates native answers,
+                writes JSONL + gate report; does NOT write to the benchmark tables.
+  --full        all 1000; persists to musique_eval1k_cognee_native (idempotent,
+                resumable by question_id). The judge is a separate step
                 (scripts/run_llm_judge.py --full --experiment-id musique_eval1k_cognee_native).
 """
 
@@ -218,9 +218,9 @@ async def run_smoke(n: int) -> bool:
     sample = _smoke_sample(questions)
     if n != sum(SMOKE_STRATA.values()):
         sample = sample[:n]
-    print(f"[smoke] {len(sample)} perguntas (hops: "
+    print(f"[smoke] {len(sample)} questions (hops: "
           f"{ {h: sum(1 for q in sample if _hop_of(q) == h) for h in SMOKE_STRATA} }); "
-          f"top_k={COGNEE_NATIVE_TOP_K} (default nativo do cognee)")
+          f"top_k={COGNEE_NATIVE_TOP_K} (cognee native default)")
 
     nodes_before = _cognee_node_count()
     adapter = _build_adapter(COGNEE_NATIVE_TOP_K)
@@ -246,11 +246,11 @@ async def run_smoke(n: int) -> bool:
     graph_unchanged = nodes_before == nodes_after
 
     gates = {
-        "0 falhas técnicas": technical_failures == 0,
-        "todas as respostas não-vazias": non_empty == len(rows),
-        "geração nativa (only_context=False + resposta curta, não blob)":
+        "0 technical failures": technical_failures == 0,
+        "all answers non-empty": non_empty == len(rows),
+        "native generation (only_context=False + short answer, not a blob)":
             native_confirmed == len(rows) and answer_like == len(rows),
-        "grafo cognee inalterado (retrieval-only)": graph_unchanged,
+        "cognee graph unchanged (retrieval-only)": graph_unchanged,
     }
     passed = all(gates.values())
 
@@ -263,8 +263,8 @@ async def run_smoke(n: int) -> bool:
     print()
     for name, ok in gates.items():
         print(f"[gate] {'PASS' if ok else 'FAIL'}  {name}")
-    print(f"[smoke] sinal grosseiro gold-hit (informativo, não-gate): {gold_hits}/{len(rows)}")
-    print(f"[smoke] GATE {'PASS' if passed else 'FAIL'} — relatório: "
+    print(f"[smoke] rough gold-hit signal (informational, not a gate): {gold_hits}/{len(rows)}")
+    print(f"[smoke] GATE {'PASS' if passed else 'FAIL'} — report: "
           f"{REPORTS / 'cognee_native_smoke_report.md'}")
     return passed
 
@@ -278,18 +278,18 @@ def _write_smoke_report(
     gold_hits: int,
 ) -> None:
     lines = [
-        "# Smoke — cognee NATIVO (Braço B, P2)",
+        "# Smoke — NATIVE cognee (Arm B, P2)",
         "",
-        f"Perguntas: {len(rows)} (estratificado por hop, seed {SMOKE_SEED}). "
-        f"`top_k={COGNEE_NATIVE_TOP_K}` = default da API `recall()` do cognee 1.1.2 "
-        f"(\"as deployed\"), NÃO o k=5 do braço controlado.",
+        f"Questions: {len(rows)} (hop-stratified, seed {SMOKE_SEED}). "
+        f"`top_k={COGNEE_NATIVE_TOP_K}` = default of cognee 1.1.2's `recall()` API "
+        f"(\"as deployed\"), NOT the k=5 of the controlled arm.",
         "",
-        f"Geração nativa: `GRAPH_COMPLETION`, `only_context=False` → 1 chamada gpt-4o-mini/pergunta "
-        f"dentro do cognee. Índice: Option C Neo4j (bolt 17689) + sqlite + lancedb.",
+        f"Native generation: `GRAPH_COMPLETION`, `only_context=False` → 1 gpt-4o-mini call/question "
+        f"inside cognee. Index: Option C Neo4j (bolt 17689) + sqlite + lancedb.",
         "",
         "## Gate",
         "",
-        "| critério | resultado |",
+        "| criterion | result |",
         "|---|---|",
     ]
     for name, ok in gates.items():
@@ -297,13 +297,13 @@ def _write_smoke_report(
     lines.append(f"| **GATE global** | {'✅ **PASS**' if passed else '❌ **FAIL**'} |")
     lines += [
         "",
-        f"- grafo cognee (nós) antes/depois: `{nodes_before}` / `{nodes_after}`",
-        f"- gold-hit grosseiro (informativo, NÃO é o judge): `{gold_hits}/{len(rows)}`",
-        f"- latência média: `{sum(r['latency_ms'] for r in rows) / max(len(rows), 1) / 1000:.1f}s`",
+        f"- cognee graph (nodes) before/after: `{nodes_before}` / `{nodes_after}`",
+        f"- rough gold-hit (informational, NOT the judge): `{gold_hits}/{len(rows)}`",
+        f"- mean latency: `{sum(r['latency_ms'] for r in rows) / max(len(rows), 1) / 1000:.1f}s`",
         "",
-        "## Perguntas",
+        "## Questions",
         "",
-        "| # | hop | question_id | status | len | only_ctx | api | lat(s) | gold-hit | resposta (prévia) |",
+        "| # | hop | question_id | status | len | only_ctx | api | lat(s) | gold-hit | answer (preview) |",
         "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for i, r in enumerate(rows, start=1):
@@ -315,9 +315,9 @@ def _write_smoke_report(
         )
     lines += [
         "",
-        "## Próximo passo (se PASS)",
+        "## Next step (if PASS)",
         "",
-        "Full 1000 + judge (aprovação do autor):",
+        "Full 1000 + judge (author approval):",
         "```",
         "python scripts/run_cognee_native.py --full",
         "python scripts/run_llm_judge.py --full --experiment-id musique_eval1k_cognee_native --out-tag cognee_native",
@@ -367,11 +367,11 @@ async def run_full(limit: int | None = None) -> None:
     # até done == len(questions). Idempotente via os question_ids já em `done`.
     if limit is not None and limit > 0:
         todo = todo[:limit]
-    print(f"[full] {len(questions)} perguntas · {len(done)} já feitas · "
-          f"{len(todo)} nesta sessão"
-          f"{f' (limite={limit})' if limit else ''} · top_k={COGNEE_NATIVE_TOP_K}", flush=True)
+    print(f"[full] {len(questions)} questions · {len(done)} already done · "
+          f"{len(todo)} this session"
+          f"{f' (limit={limit})' if limit else ''} · top_k={COGNEE_NATIVE_TOP_K}", flush=True)
     if not todo:
-        print("[full] nada a fazer nesta sessão (tudo já gravado)", flush=True)
+        print("[full] nothing to do this session (everything already written)", flush=True)
         conn.close()
         return
 
@@ -381,7 +381,7 @@ async def run_full(limit: int | None = None) -> None:
     for i, q in enumerate(todo, start=1):
         row = await _generate_one(adapter, q, COGNEE_NATIVE_TOP_K)
         if row["status"] != "completed":
-            print(f"[full] ERRO {q['question_id']}: {row['error']} — abortando para inspeção", flush=True)
+            print(f"[full] ERROR {q['question_id']}: {row['error']} — aborting for inspection", flush=True)
             raise SystemExit(1)
         if row["answer_len"] == 0:
             empties += 1
@@ -408,9 +408,9 @@ async def run_full(limit: int | None = None) -> None:
         conn.commit()
         written += 1
         if i % 25 == 0 or i == len(todo):
-            print(f"[full] {i}/{len(todo)} gravadas ({written} nesta sessão, {empties} vazias) "
-                  f"últ.: {row['latency_ms']/1000:.1f}s", flush=True)
-    print(f"[full] concluído: {written} gravadas em {TARGET_EXP} ({empties} respostas vazias)", flush=True)
+            print(f"[full] {i}/{len(todo)} written ({written} this session, {empties} empty) "
+                  f"last: {row['latency_ms']/1000:.1f}s", flush=True)
+    print(f"[full] done: {written} written to {TARGET_EXP} ({empties} empty answers)", flush=True)
     conn.close()
 
 
@@ -418,10 +418,10 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     group = ap.add_mutually_exclusive_group(required=True)
     group.add_argument("--smoke", nargs="?", type=int, const=sum(SMOKE_STRATA.values()),
-                       help="roda o smoke (default 15 perguntas estratificadas)")
-    group.add_argument("--full", action="store_true", help="roda as 1000 e persiste")
+                       help="run the smoke test (default 15 stratified questions)")
+    group.add_argument("--full", action="store_true", help="run all 1000 and persist")
     ap.add_argument("--limit", type=int, default=None,
-                    help="máx. de perguntas nesta invocação; p/ reinício em lotes (só com --full)")
+                    help="max questions in this invocation; for batched restarts (only with --full)")
     ap.add_argument("--dataset-id", default=DATASET_ID)
     ap.add_argument("--dataset-version", default=DATASET_VERSION)
     args = ap.parse_args()

@@ -75,11 +75,11 @@ def main() -> None:
         "--summary-override",
         action="append",
         default=[],
-        metavar="ANTIGO.json=NOVO.json",
-        help="troca o ficheiro de summary de uma célula, por exemplo "
+        metavar="OLD.json=NEW.json",
+        help="swap a cell's summary file, for example "
         "llm_judge_full_hipporag2_v1free_summary.json="
-        "llm_judge_full_hipporag2_v1free_official_summary.json. Repetível. Só "
-        "muda QUAL summary é lido, nunca como as métricas são calculadas.",
+        "llm_judge_full_hipporag2_v1free_official_summary.json. Repeatable. Only "
+        "changes WHICH summary is read, never how the metrics are computed.",
     )
     args = ap.parse_args()
     R = Path(args.reports_dir)
@@ -92,7 +92,7 @@ def main() -> None:
             for key, (path, method) in list(table.items()):
                 if path in mapping:
                     table[key] = (mapping[path], method)
-        print(f"summaries trocados: {mapping}")
+        print(f"summaries swapped: {mapping}")
 
     FIG.mkdir(parents=True, exist_ok=True)
     cells = {f"{fw}|{arm}": cell(*CELLS[(fw, arm)]) for (fw, arm) in CELLS}
@@ -127,8 +127,8 @@ def main() -> None:
     h = 0.34
     ctrl = [cells[f"{fw}|controlado"]["strict"] for fw in FRAMEWORKS]
     natv = [cells[f"{fw}|nativo"]["strict"] for fw in FRAMEWORKS]
-    ax.barh([i + h / 2 + 0.02 for i in y], ctrl, height=h, color=BLUE, label="controlado (reader fixo v1free)")
-    ax.barh([i - h / 2 - 0.02 for i in y], natv, height=h, color=AQUA, label="nativo (as deployed)")
+    ax.barh([i + h / 2 + 0.02 for i in y], ctrl, height=h, color=BLUE, label="controlled (fixed reader v1free)")
+    ax.barh([i - h / 2 - 0.02 for i in y], natv, height=h, color=AQUA, label="native (as deployed)")
     for i, fw in zip(y, FRAMEWORKS):
         ax.text(cells[f"{fw}|controlado"]["strict"] + 0.008, i + h / 2 + 0.02,
                 f"{cells[f'{fw}|controlado']['strict']:.3f}", va="center", fontsize=9, color=INK)
@@ -137,17 +137,17 @@ def main() -> None:
     import matplotlib.transforms as mtransforms
 
     blend = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
-    for label, key, style in [("closed-book (piso)", "closed_book (piso)", ":"),
-                              ("denso controlado", "vector_denso (controlado)", "--"),
-                              ("oracle v1 (teto)", "oracle_gold_v1 (teto)", "-.")]:
+    for label, key, style in [("closed-book (floor)", "closed_book (piso)", ":"),
+                              ("controlled dense", "vector_denso (controlado)", "--"),
+                              ("oracle v1 (ceiling)", "oracle_gold_v1 (teto)", "-.")]:
         v = baselines[key]["strict"]
         ax.axvline(v, color=MUTED, linestyle=style, linewidth=1)
         ax.text(v, 1.01, f"{label}\n{v:.3f}", transform=blend,
                 ha="center", va="bottom", fontsize=8, color=MUTED)
     ax.set_yticks(y, FRAMEWORKS)
     ax.set_xlim(0, 0.85)
-    ax.set_xlabel("acurácia strict (judge gpt-4o, 1000q MuSiQue eval1k)")
-    ax.set_title("Braço A (controlado) × Braço B (nativo) — strict por framework",
+    ax.set_xlabel("strict accuracy (judge gpt-4o, 1000q MuSiQue eval1k)")
+    ax.set_title("Arm A (controlled) × Arm B (native) — strict by framework",
                  fontsize=11, color=INK, pad=36)
     ax.legend(loc="lower right", frameon=False, fontsize=9)
     ax.spines[["top", "right"]].set_visible(False)
@@ -172,8 +172,8 @@ def main() -> None:
     ax.axvline(0, color=MUTED, linewidth=1)
     ax.set_yticks(y, FRAMEWORKS)
     ax.set_xlim(-0.15, 0.15)
-    ax.set_xlabel("Δ strict (nativo − controlado), McNemar pareado; p_holm na tabela do report")
-    ax.set_title("Família A↔B — deployment gap por framework", fontsize=11, color=INK)
+    ax.set_xlabel("Δ strict (native − controlled), paired McNemar; p_holm in the report table")
+    ax.set_title("Family A↔B — deployment gap by framework", fontsize=11, color=INK)
     ax.spines[["top", "right"]].set_visible(False)
     ax.xaxis.grid(True, color=GRID, linewidth=0.6)
     ax.set_axisbelow(True)
@@ -187,15 +187,15 @@ def main() -> None:
     for i, fw in zip(y, FRAMEWORKS):
         c, n = cells[f"{fw}|controlado"], cells[f"{fw}|nativo"]
         ax.barh(i + h / 2 + 0.02, c["refusal"], height=h, color=BLUE,
-                label="controlado (reader fixo v1free)" if fw == FRAMEWORKS[0] else None)
+                label="controlled (fixed reader v1free)" if fw == FRAMEWORKS[0] else None)
         ax.barh(i - h / 2 - 0.02, n["refusal"], height=h, color=AQUA,
-                label="nativo (as deployed)" if fw == FRAMEWORKS[0] else None)
+                label="native (as deployed)" if fw == FRAMEWORKS[0] else None)
         ax.text(c["refusal"] + 0.003, i + h / 2 + 0.02, f"{c['refusal']:.3f}", va="center", fontsize=9, color=INK)
         ax.text(n["refusal"] + 0.003, i - h / 2 - 0.02, f"{n['refusal']:.3f}", va="center", fontsize=9, color=INK)
     ax.set_yticks(y, FRAMEWORKS)
     ax.set_xlim(0, 0.26)
-    ax.set_xlabel("taxa de recusa (judge: label=refusal)")
-    ax.set_title("Recusa por framework × braço", fontsize=11, color=INK)
+    ax.set_xlabel("refusal rate (judge: label=refusal)")
+    ax.set_title("Refusal by framework × arm", fontsize=11, color=INK)
     ax.legend(loc="upper right", frameon=False, fontsize=9)
     ax.spines[["top", "right"]].set_visible(False)
     ax.xaxis.grid(True, color=GRID, linewidth=0.6)
@@ -205,7 +205,7 @@ def main() -> None:
     plt.close(fig)
 
     # ---- tabela no stdout ----
-    print(f"{'framework':<12} {'braço':<11} {'strict':>7} {'lenient':>8} {'recusa':>7} {'cobert.':>8} {'seletiva':>9}")
+    print(f"{'framework':<12} {'arm':<11} {'strict':>7} {'lenient':>8} {'refusal':>7} {'coverage':>8} {'selective':>9}")
     for fw in FRAMEWORKS:
         for arm in ("controlado", "nativo"):
             c = cells[f"{fw}|{arm}"]
