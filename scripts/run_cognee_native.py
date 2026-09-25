@@ -357,7 +357,10 @@ async def run_full(limit: int | None = None) -> None:
             (TARGET_EXP, METHOD),
         )
         done = {row[0] for row in cur.fetchall()}
-    todo = [q for q in questions if q["question_id"] not in done]
+    todo = sorted(
+        (q for q in questions if q["question_id"] not in done),
+        key=lambda q: q["question_id"],
+    )
     # Reinício em lotes: cognee vaza memória por chamada de recall() (conexões
     # LanceDB/subprocess não liberadas), então cada invocação processa no máximo
     # `limit` perguntas e sai; o supervisor relança um processo NOVO (memória zerada)

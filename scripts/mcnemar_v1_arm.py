@@ -19,7 +19,6 @@ import math
 from datetime import datetime, timezone
 from pathlib import Path
 
-import psycopg2
 
 # Pares por SUFIXO; o prefixo do dataset (--exp-prefix) monta os experiment_ids.
 PRIMARY_SUFFIX = [
@@ -93,6 +92,7 @@ def holm(results: list[dict]) -> None:
 
 def main() -> None:
     from benchmark.core.settings import load_settings
+    from benchmark.storage.postgres import connect_postgres
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--exp-prefix", default="musique_eval1k_")
@@ -121,7 +121,7 @@ def main() -> None:
         ]
         print(f"sufixos trocados: {mapping}")
 
-    connection = psycopg2.connect(load_settings().database_url)
+    connection = connect_postgres(load_settings())
     cursor = connection.cursor()
 
     primary = [compare(cursor, prefix + a, prefix + b, prefix) for a, b in PRIMARY_SUFFIX]

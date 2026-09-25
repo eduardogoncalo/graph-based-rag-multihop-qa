@@ -21,7 +21,6 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-import psycopg2
 
 DATASET_ID = "musique"
 DATASET_VERSION = "ans_v1.0_eval1k"
@@ -60,8 +59,9 @@ def _docs_for_method(method_id: str, rows: list[tuple]) -> list[str]:
 
 def main() -> None:
     from benchmark.core.settings import load_settings
+    from benchmark.storage.postgres import connect_postgres
 
-    connection = psycopg2.connect(load_settings().database_url)
+    connection = connect_postgres(load_settings())
     with connection.cursor() as cursor:
         cursor.execute(
             """

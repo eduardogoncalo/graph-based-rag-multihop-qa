@@ -195,7 +195,10 @@ def run_full(limit: int | None = None) -> None:
         cur.execute("SELECT a.question_id FROM answers a JOIN runs r ON a.run_id=r.run_id "
                     "WHERE r.experiment_id=%s AND r.method_id=%s", (TARGET_EXP, METHOD))
         done = {row[0] for row in cur.fetchall()}
-    todo = [q for q in questions if q["question_id"] not in done]
+    todo = sorted(
+        (q for q in questions if q["question_id"] not in done),
+        key=lambda q: q["question_id"],
+    )
     if limit:
         todo = todo[:limit]
     print(f"[full] {len(questions)} perguntas · {len(done)} já feitas · {len(todo)} nesta sessão"

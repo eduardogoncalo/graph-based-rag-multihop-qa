@@ -20,7 +20,6 @@ from datetime import datetime, timezone
 from itertools import combinations
 from pathlib import Path
 
-import psycopg2
 
 # Sufixos; o prefixo do dataset (--exp-prefix) monta os experiment_ids.
 NATIVE_SUFFIX = [
@@ -65,6 +64,13 @@ def mcnemar_exact(b: int, c: int) -> float:
 def compare(cursor, exp_a: str, exp_b: str, prefix: str) -> dict:
     a_map, b_map = strict_map(cursor, exp_a), strict_map(cursor, exp_b)
     common = sorted(set(a_map) & set(b_map))
+    if not common:
+        # Every pair of this family is required: a missing cell is an error, not
+        # a row to skip (it would also divide by zero below).
+        raise SystemExit(
+            f"no paired judged questions between {exp_a} and {exp_b}. "
+            "Did both cells run and get judged?"
+        )
     both = sum(1 for q in common if a_map[q] and b_map[q])
     only_a = sum(1 for q in common if a_map[q] and not b_map[q])   # b (A ganha)
     only_b = sum(1 for q in common if not a_map[q] and b_map[q])   # c (B ganha)
@@ -97,6 +103,7 @@ def main() -> None:
     import argparse
 
     from benchmark.core.settings import load_settings
+    from benchmark.storage.postgres import connect_postgres
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--exp-prefix", default="musique_eval1k_")
@@ -126,7 +133,7 @@ def main() -> None:
         ]
         print(f"sufixos trocados: {mapping}")
 
-    connection = psycopg2.connect(load_settings().database_url)
+    connection = connect_postgres(load_settings())
     cursor = connection.cursor()
 
     family_b = [compare(cursor, prefix + a, prefix + b, prefix) for a, b in FAMILY_B_SUFFIX]
