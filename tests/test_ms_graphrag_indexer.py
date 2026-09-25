@@ -53,8 +53,8 @@ def test_ms_graphrag_index_uses_official_cli_commands(tmp_path: Path) -> None:
 
     assert summary.method_id == "ms_graphrag"
     assert summary.document_count == 1
-    assert runner.calls[0][:2] == ["graphrag", "init"]
-    assert runner.calls[1][:2] == ["graphrag", "index"]
+    assert Path(runner.calls[0][0]).name == "graphrag" and runner.calls[0][1] == "init"
+    assert Path(runner.calls[1][0]).name == "graphrag" and runner.calls[1][1] == "index"
     assert "--root" in runner.calls[1]
     assert "--method" in runner.calls[1]
     assert "fast" in runner.calls[1]
@@ -85,3 +85,21 @@ class FakeGraphRAGRunner:
     def run(self, args: list[str], *, cwd: Path | None = None) -> GraphRAGCommandResult:
         self.calls.append(args)
         return GraphRAGCommandResult(args=args, returncode=0, stdout="ok", stderr="")
+
+
+def test_graphrag_cli_prefers_the_isolated_environment(tmp_path, monkeypatch) -> None:
+    from benchmark.methods.ms_graphrag.adapter import graphrag_cli
+
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    (bin_dir / "python").touch()
+    (bin_dir / "graphrag").touch()
+    monkeypatch.delenv("GRAPHRAG_CLI", raising=False)
+    monkeypatch.setenv("GRAPHRAG_VENV_PYTHON", str(bin_dir / "python"))
+    assert graphrag_cli() == str(bin_dir / "graphrag")
+
+    (bin_dir / "graphrag").unlink()
+    assert graphrag_cli() == "graphrag"
+
+    monkeypatch.setenv("GRAPHRAG_CLI", "/opt/custom/graphrag")
+    assert graphrag_cli() == "/opt/custom/graphrag"

@@ -34,12 +34,18 @@ class GraphRAGCommandRunner(Protocol):
 
 class GraphRAGSubprocessRunner:
     def run(self, args: list[str], *, cwd: Path | None = None) -> GraphRAGCommandResult:
+        # The generated settings.yaml reads the key from ${GRAPHRAG_API_KEY}.
+        # Default it to OPENAI_API_KEY, as scripts/graphrag_query_runner.py and
+        # the thesis's indexer do; without it `graphrag index` fails at auth.
+        env = dict(os.environ)
+        env.setdefault("GRAPHRAG_API_KEY", env.get("OPENAI_API_KEY", ""))
         completed = subprocess.run(
             args,
             cwd=cwd,
             check=False,
             capture_output=True,
             text=True,
+            env=env,
         )
         return GraphRAGCommandResult(
             args=args,
@@ -47,6 +53,25 @@ class GraphRAGSubprocessRunner:
             stdout=completed.stdout,
             stderr=completed.stderr,
         )
+
+
+def graphrag_cli() -> str:
+    """The official `graphrag` CLI of the isolated environment.
+
+    `init` and `index` run the CLI; it lives in `.venvs/graphrag/bin`, next to
+    the Python the query runner uses, and is not on the main environment's
+    PATH. A bare "graphrag" only worked where that directory had been put on
+    PATH by hand (the thesis's own indexer, scripts/index_ms_graphrag_musique.py,
+    does exactly that). GRAPHRAG_CLI overrides; with neither, PATH decides.
+    """
+    explicit = os.environ.get("GRAPHRAG_CLI")
+    if explicit:
+        return explicit
+    python_bin = Path(
+        os.environ.get("GRAPHRAG_VENV_PYTHON", str(Path(".venvs/graphrag/bin/python").absolute()))
+    )
+    sibling = python_bin.parent / "graphrag"
+    return str(sibling) if sibling.exists() else "graphrag"
 
 
 @dataclass(frozen=True)
@@ -93,7 +118,7 @@ class MicrosoftGraphRAGAdapter:
         # benchmark models at init time; build_config_files then only patches
         # provider/api_key/CSV input on top of the generated defaults.
         args = [
-            "graphrag", "init",
+            graphrag_cli(), "init",
             "--root", str(self.workspace.workspace_dir),
             "--model", DEFAULT_CHAT_MODEL,
             "--embedding", DEFAULT_EMBEDDING_MODEL,
@@ -109,7 +134,7 @@ class MicrosoftGraphRAGAdapter:
 
     def index(self, *, method: str = "standard") -> GraphRAGCommandResult:
         args = [
-            "graphrag",
+            graphrag_cli(),
             "index",
             "--root",
             str(self.workspace.workspace_dir),
@@ -182,7 +207,7 @@ class MicrosoftGraphRAGAdapter:
 
     def query(self, *, query: str, query_method: str = "local") -> GraphRAGCommandResult:
         args = [
-            "graphrag",
+            graphrag_cli(),
             "query",
             "--root",
             str(self.workspace.workspace_dir),
