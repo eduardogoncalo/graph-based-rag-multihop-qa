@@ -1,534 +1,312 @@
-# graph_based_rag
+# Graph-Based RAG for Multi-hop Question Answering: A Two-Arm Evaluation of Four Frameworks
 
-A comparative benchmark of graph-based RAG for multi-hop question answering,
-over **MuSiQue** and **2WikiMultiHopQA**.
+Code and data for my MSc dissertation in Artificial Intelligence (National
+College of Ireland, 2026). **The dissertation is [`thesis.pdf`](thesis.pdf).**
 
-It compares five retrieval substrates — dense vector RAG, LightRAG, Microsoft
-GraphRAG, Cognee and HippoRAG 2 — across **two arms**:
+The study compares four graph-based RAG frameworks — **LightRAG**, **Microsoft
+GraphRAG**, **HippoRAG 2** and **Cognee** — on multi-hop question answering, over
+1,000 questions of **MuSiQue** and 1,000 of **2WikiMultiHopQA**.
 
-- **controlled**, where a fixed reader answers from the retrieved context, under
-  the same conditions for every method;
-- **native**, where each framework answers through its own pipeline, the way
-  someone who installed it would use it.
+Published evaluations of these frameworks are end-to-end: the same system
+retrieves and answers, so the result does not separate what the index found
+from what the pipeline did with it. This study runs every framework in **two
+arms over the same index**:
 
-The only thing that changes between the two reader arms is one instruction. It
-lives in an environment variable, `READER_GROUNDING`, and the security section
-below explains why it is the most dangerous variable in this repository.
+- **controlled arm** — the framework only retrieves, and a fixed reader
+  (`gpt-4o-mini`) answers from what it returned;
+- **native arm** — the framework answers with its own pipeline, the way someone
+  who installed it would use it.
+
+Answers are graded by an LLM judge (`gpt-4o`) validated against human labels,
+and compared with exact McNemar tests under Holm correction.
+
+## Main results
+
+**Controlled arm.** Strict accuracy with the fixed reader, and the paired
+difference against the dense baseline. `docs/q` is how many documents each
+framework actually hands to the reader.
+
+| | docs/q | recall@5 | strict accuracy | vs. dense (pp) |
+|---|---:|---:|---:|---:|
+| **MuSiQue** | | | | |
+| Closed-book floor | — | — | 0.209 | |
+| Dense baseline | 4.92 | 0.553 | 0.463 | |
+| HippoRAG 2 | 5.00 | 0.603 | 0.502 | +3.8 \* |
+| LightRAG | 20.00 | 0.506 | **0.519** | +5.7 \*\*\* |
+| Microsoft GraphRAG | 16.57 | 0.447 | 0.495 | +3.2 \* |
+| Cognee | 2.76 | 0.434 | 0.401 | −6.2 \*\*\* |
+| Oracle ceiling | — | — | 0.770 | |
+| **2WikiMultiHopQA** | | | | |
+| Closed-book floor | — | — | 0.335 | |
+| Dense baseline | 4.82 | 0.704 | 0.678 | |
+| HippoRAG 2 | 5.00 | 0.864 | **0.801** | +12.2 \*\*\* |
+| LightRAG | 20.00 | 0.693 | 0.731 | +5.3 \*\*\* |
+| Microsoft GraphRAG | 12.95 | 0.608 | 0.694 | +1.6 |
+| Cognee | 2.46 | 0.625 | 0.615 | −6.3 \*\*\* |
+| Oracle ceiling | — | — | 0.890 | |
+
+Exact McNemar, Holm-corrected: \*\*\* p < 0.001, \* p < 0.05, no mark = not
+significant.
+
+**Native arm against its own controlled arm**, over the same index. A negative
+delta means the framework's own pipeline answers worse than the fixed reader.
+
+| | controlled | native | Δ (pp) | Holm p | native refusal |
+|---|---:|---:|---:|---:|---:|
+| **MuSiQue** | | | | | |
+| LightRAG | 0.519 | 0.548 | +2.8 | 0.142 | 11.9% |
+| Microsoft GraphRAG | 0.495 | 0.474 | −2.1 | 0.168 | 9.2% |
+| HippoRAG 2 | 0.502 | 0.466 | −3.5 | 0.024 | 15.1% |
+| Cognee | 0.401 | 0.349 | −5.2 | < 0.001 | 14.8% |
+| **2WikiMultiHopQA** | | | | | |
+| LightRAG | 0.731 | 0.615 | −11.6 | < 0.001 | 21.8% |
+| Microsoft GraphRAG | 0.694 | 0.518 | −17.6 | < 0.001 | 26.0% |
+| HippoRAG 2 | 0.801 | 0.723 | −7.7 | < 0.001 | 16.0% |
+| Cognee | 0.615 | 0.534 | −8.0 | < 0.001 | 20.9% |
+
+What the tables support:
+
+- With the fixed reader, LightRAG and HippoRAG 2 beat the dense baseline on
+  both datasets, and Cognee falls below it on both.
+- **These gaps do not isolate the effect of the graph.** The frameworks deliver
+  very different amounts of context — from 2.5 to 20 documents per question —
+  and the design does not control for it.
+- Retrieving better is not the same as answering better: on MuSiQue, HippoRAG 2
+  has the best recall@5 and LightRAG the best accuracy.
+- On 2WikiMultiHopQA, all four native pipelines score below their controlled
+  counterparts, by 7.7 to 17.6 points. Part of the error turns into refusals:
+  native refusal is 16.0% to 26.0%, against 1.6% to 4.1% in the controlled arm.
+
+These are Tables 3 and 4 of the dissertation. They are rebuilt from
+[`results/aggregate/`](results/aggregate/), and
+`tests/test_results_match_thesis.py` checks the two against each other.
 
 ---
 
-## What runs, and what is evidence
+## What is in this repository
 
-Two things in this package look alike and are not.
+| | |
+|---|---|
+| `src/benchmark/` | the harness: ingestion, method adapters, reader, evaluation, CLI |
+| `scripts/` | indexers, native runners, judge, retrieval audit, statistics, and `reproduce.sh` |
+| `configs/` | datasets, methods, experiments, the Neo4j port registry |
+| `requirements/` | manifests for the three isolated framework environments |
+| `tests/` | the test suite |
+| `results/` | **the data behind the dissertation**: 22 cells, per question and per retrieved document |
+| `validation/s10_judge/` | the human validation of the judge, annotated by hand |
+| `docs/` | design notes and one decision record |
 
-**The code runs.** `src/`, `scripts/`, `configs/` and `tests/` are the pipeline.
-Point them at a dataset and they produce indexes, answers and a table.
+`src/`, `scripts/` and `configs/` are code you run. `results/` and
+`validation/` are **evidence from the original run**: the pipeline neither
+reads nor regenerates them, and only the checks in
+[Checking the dissertation](#checking-the-dissertation-against-its-data) use
+them. Your own run produces your own
+numbers, which will differ, because indexing, reading and judging all use
+language models.
 
-**`results/` and `validation/` are evidence from the original study.** They came
-out of the experimental run that the thesis reports, on the machine where that
-run happened. Nothing here regenerates them, no code reads them, and running the
-pipeline will not reproduce them — it produces *your* numbers, which will be
-different. They are here so the thesis can be checked against its own data.
-
-The human annotation in `validation/s10_judge/` was **filled in by hand, by the
-author**. There is no code path that could produce it.
+Most of what a user reads (output, `--help`, reports) is in English. Some code
+comments, internal identifiers, a few messages and the decision record in
+`docs/decisions/` are still in Portuguese.
 
 ---
 
 ## Getting started
 
-Four steps. The first needs one binary; the rest need nothing that is not
-already in the repository.
+Requirements: [`uv`](https://docs.astral.sh/uv/) (it installs its own Python),
+`podman` or `docker` with compose, and an OpenAI API key. No GPU.
 
 ```bash
-# 1. uv, which installs its own Python (no pyenv, no system Python
-#    at a particular version)
-curl -LsSf https://astral.sh/uv/install.sh | sh
+curl -LsSf https://astral.sh/uv/install.sh | sh    # 1. uv
 
-# 2. the environments
-./scripts/bootstrap_envs.sh          # the main one; enough for smoke mode
-./scripts/bootstrap_envs.sh --full   # plus the three isolated ones, for full mode
+./scripts/bootstrap_envs.sh                         # 2. the main environment
+./scripts/bootstrap_envs.sh --full                  #    plus the three isolated ones
 
-# 3. configuration
-cp .env.example .env
-$EDITOR .env                          # fill in OPENAI_API_KEY
+cp .env.example .env && $EDITOR .env                # 3. OPENAI_API_KEY, MODEL_PROVIDER=openai
 
-# 4. run it
-./scripts/reproduce.sh --dry-run      # checks everything, spends nothing
-./scripts/reproduce.sh                # the whole chain
+./scripts/reproduce.sh --dry-run                    # 4. checks everything, spends nothing
+./scripts/reproduce.sh                              # 5. the smoke run
 ```
 
-`--dry-run` checks the environment, the key, `MODEL_PROVIDER`, compose, the
-ports and the data files **without making a single paid call**. It is always
-worth doing before the first run.
+`--dry-run` checks the environments, the key, the configuration, the container
+runtime and that the data files are present, without a single paid call. It
+does not start any service. Run it before any paid run.
 
-### Requirements
+`reproduce.sh` has independent axes, and confusing them costs money:
 
-| | what for |
+| option | chooses |
 |---|---|
-| `uv` | builds the environments and installs Python |
-| `podman` or `docker`, with compose | Postgres and Neo4j |
-| an OpenAI key | indexing, reading and the judge |
-| ~3 GB of disk | `smoke` mode |
-| ~12 GB of disk | `full` mode |
+| `--mode smoke\|full` | **which methods** run: `smoke` is the dense baseline and LightRAG; `full` adds Microsoft GraphRAG, Cognee and HippoRAG 2 |
+| `--dataset`, `--version` | **how many questions**: a 20-question sample by default, or a complete 1,000-question dataset |
+| `--protocol thesis` | **what runs**: without it, only the controlled arm; with it, the whole protocol of the dissertation (implies `--mode full`) |
 
-Measured on 2026-08-09, with the smoke sample indexed by all five methods:
-`.venv` 1.2 GB · `.venvs/` 8.8 GB (7 GB of which is HippoRAG 2, because of
-torch) · `data/` 358 MB · `artifacts/` 457 MB. Podman volumes on top of that.
+The two smoke samples, `musique_smoke_20` (399 documents) and
+`twowiki_smoke_20` (191 documents), have 20 questions each. Indexing is paid by
+documents, not questions: shrink `num_questions` in the dataset config and the
+corpus shrinks with it.
 
-No GPU needed. The embedder is OpenAI's `text-embedding-3-small`, by declared
-choice — the HippoRAG 2 paper uses NV-Embed-v2, and the thesis owns that
-divergence as a controlled comparison.
+Disk: about 3 GB for smoke mode and 12 GB for full mode, most of it the
+HippoRAG 2 environment (torch).
 
 ---
 
-## Two axes, and confusing them costs money
-
-`reproduce.sh` has **two independent axes**, and the first one's name misleads:
-
-| axis | option | chooses |
-|---|---|---|
-| mode | `--mode smoke\|full` | **which methods** run |
-| dataset | `--dataset` / `--version` | **how many questions** |
-
-`--mode full` over the smoke sample costs cents. The same `--mode full` over the
-complete dataset costs tens of dollars and around 38 hours in Cognee indexing
-alone. Same option.
-
-### `smoke` mode — the default
-
-`vector_rag` and `lightrag_neo4j`, the two that run with the main environment
-and nothing else. The first exercises the dense path and Postgres with pgvector;
-the second exercises the graph path, Option C, and the per-*(method, dataset)*
-Neo4j container.
-
-### `full` mode
-
-Adds **`ms_graphrag`**, `cognee` and `hipporag2`. Needs the three isolated
-environments and Cognee's Postgres.
-
-> That is `ms_graphrag` — Microsoft's official file/parquet implementation,
-> indexed through the CLI in `.venvs/graphrag` — and **not**
-> `ms_graphrag_neo4j`. That variant is in the CLI but **has no live client**:
-> the adapter raises `ms_graphrag_neo4j live execution is not configured`. It is
-> an offline boundary that never got an implementation, and the Microsoft
-> GraphRAG in the thesis is the other one.
-
-### The smoke samples
-
-Two of them, one per dataset, **20 questions** each:
-
-| dataset | questions | documents | why that document count |
-|---|---:|---:|---|
-| `musique_smoke_20` | 20 | 399 | each MuSiQue question drags ~20 paragraphs along — 2 or 3 supporting, the rest distractors, and all of them part of the corpus |
-| `twowiki_smoke_20` | 20 | 191 | the 2Wiki corpus is a separately published file of 6,119 passages; the loader narrows it to the passages belonging to the sampled questions |
-
-**Indexing is paid for by documents, not by questions.** To shrink this further,
-shrink `num_questions` in the dataset config and the corpus shrinks with it.
-
-> Narrowing the 2Wiki corpus is not cosmetic. Without it, 20 questions dragged
-> in all 6,119 documents from the published file — roughly **thirteen hours** of
-> LightRAG indexing, against about 50 minutes for MuSiQue's 399. It would have
-> stopped being a smoke test. The full-dataset path does none of this: it loads
-> the 1,000 questions against the whole corpus, as it always has.
+## Reproducing the protocol
 
 ```bash
-./scripts/reproduce.sh                              # MuSiQue, 20 questions
-./scripts/reproduce.sh --dataset twowiki_smoke_20   # 2Wiki, 20 questions
-./scripts/reproduce.sh --mode full                  # all five methods
+./scripts/reproduce.sh --protocol thesis                           # on the 20-question sample
+./scripts/reproduce.sh --dataset musique --version ans_v1.0_eval1k --protocol thesis
+./scripts/reproduce.sh --dataset twowiki --version ans_v1.0_eval1k --protocol thesis
 ```
 
----
+`--protocol thesis` runs, in order:
 
-## What the pipeline does
+1. ingestion, with the sample checked against the fingerprints in
+   `configs/datasets/fingerprints/`;
+2. indexing with all five methods;
+3. the **controlled arm**: one experiment per cell, named
+   `<dataset>_eval1k_<cell>`, with the retrieval parameters the dissertation used;
+4. the **controls**: closed-book floor and oracle ceiling;
+5. the **native arm**: HippoRAG 2, Microsoft GraphRAG and Cognee through their
+   own runners, and LightRAG from the native answers it produced during the
+   controlled run (`scripts/etl_lightrag_native.py`);
+6. the **canonical retrieval audit** behind recall@5, all_gold@5 and docs/q;
+7. the **judge**, two passes per answer;
+8. **McNemar with Holm** for both arms, and the consolidation.
 
-```
-fetch_datasets.py     downloads the raw files and checks their sha256
-       ↓
-benchmark ingest      raw → canonical, and REFUSES a divergent sample
-       ↓
-benchmark persist     canonical → Postgres
-       ↓
-benchmark index       one index per (method, dataset)
-       ↓
-run_experiment_batch  the reader, question by question, resumable
-       ↓
-run_llm_judge         strict accuracy, via gpt-4o
-       ↓
-benchmark report      the table
-```
+The cells and their parameters:
 
-### The checks that run on their own
+| cell | method | top-k | notes |
+|---|---|---:|---|
+| `vector_v1free` | `vector_rag` | 5 | dense baseline |
+| `lightrag_v1free` | `lightrag_neo4j` | 40 | `CHUNK_TOP_K=20`, which gives the 20 documents per question |
+| `ms_graphrag_v1free` | `ms_graphrag` | 20 | local search; the cut is on the assembled context |
+| `hipporag2_v1free` | `hipporag2` | 5 | in `results/` this cell and the native one carry the suffix `_official`: the same method over the single-pass index |
+| `cognee_v1free_k5` | `cognee` | 5 | Cognee returns an unranked set, so @k truncates a set |
+| `closed_book` | `zero_shot_no_context` | — | no documents |
+| `oracle_gold_v1free` | `single_document_context` | — | the gold documents |
+| `*_native` | each framework's own pipeline | — | Cognee in batches of 150, one process each, because its recall leaks memory |
 
-- **The sample.** `configs/datasets/fingerprints/` records the identifiers of
-  each dataset. `ingest` compares them and **refuses to write** a sample that
-  does not match, before exporting anything at all. A raw file from a different
-  release would produce a different 1,000 questions without anything complaining.
-- **The raw files.** Each has its sha256 pinned in `fetch_datasets.py`.
-- **The original environment.** See the security section.
+The fixed reader is the **free reader** (`READER_GROUNDING=v1`), the prompt in
+Appendix B: it uses the retrieved chunks when they help, and otherwise answers
+from its own knowledge. `--protocol thesis` refuses any other reader.
 
----
+### Cost and time
 
-## Costs and timings
+**The 20-question sample**, measured on 2026-09-25 with `--protocol thesis`:
+every stage ran end to end, all 11 cells answered 20 of 20, and the judge cost
+$1.23 (about $0.11 per cell). Cognee indexing took 51 minutes and $0.23, and
+LightRAG indexing about 16 minutes. The cost of the other indexers and of the
+readers was not recorded separately.
 
-Measured on a real `smoke` run on 2026-08-09 — 20 questions, 399 documents, 414
-chunks — with `gpt-4o-mini` as the reader, `text-embedding-3-small` for
-embeddings and `gpt-4o` as the judge:
+**The complete datasets** are a different order of magnitude:
 
-| step | time | cost |
-|---|---|---|
-| ingest + persist | seconds | $0 |
-| `vector_rag` indexing | seconds | < $0.01 |
-| `lightrag_neo4j` indexing | ~50 min | cents |
-| `vector_rag` reader (20 questions) | ~1 min | $0.0034 |
-| `lightrag_neo4j` reader (20 questions) | ~2 min | $0.0035 |
-| `cognee` indexing (399 documents) | ~1 h | $0.2178 |
-| judge (53 answers across five methods) | ~2 min | **$0.2897** |
-
-**The judge is the expensive step** among those that scale with the number of
-questions: it uses `gpt-4o` and grades every answer twice. The readers use
-`gpt-4o-mini` and cost fractions of a cent.
-
-> An earlier version of this table put **$0.218** against the judge, over 40
-> answers. That was wrong: $0.2178 is the cost of **Cognee indexing**, and the
-> judge came to $0.2897 — taken from `estimated_cost_usd_total` in the run
-> summary, which graded the 53 answers from all five methods (20+20+5+5+3), not
-> just the 40 from `smoke` mode. Corrected on 2026-08-10.
-
-LightRAG indexing is the **slow** step — about 50 minutes for 399 documents,
-because it extracts entities and relations document by document. It scales with
-documents, not with questions.
-
-### What comes out
-
-```
-| method_id      | exact_match | answer_f1 | evidence_recall@5 | latency_ms |
-| lightrag_neo4j |      0.0000 |    0.1082 |            0.7542 |    5649.60 |
-| vector_rag     |      0.0000 |    0.1024 |            0.7292 |    2325.06 |
-```
-
-And from the judge, the metric the thesis reports.
-
-**MuSiQue** (`musique_smoke_20`), `full` mode, all five methods:
-
-| method | n | recall@5 | strict accuracy | refusal |
-|---|---:|---:|---:|---:|
-| `vector_rag` | 20 | 0.729 | 0.450 | 0.350 |
-| `lightrag_neo4j` | 20 | 0.754 | 0.400 | 0.300 |
-| `hipporag2` | 5 | 1.000 | 0.800 | 0.200 |
-| `ms_graphrag` | 5 | 0.433 | 0.200 | 0.600 |
-| `cognee` | 3 | 0.278 | 0.333 | 0.000 |
-
-**2Wiki** (`twowiki_smoke_20`), `smoke` mode, measured 2026-08-10 — 191
-documents, about 20 minutes end to end, **$0.23** in total, $0.22 of which was
-the judge:
-
-| method | n | recall@5 | strict accuracy | refusal |
-|---|---:|---:|---:|---:|
-| `vector_rag` | 20 | 0.750 | 0.450 | 0.250 |
-| `lightrag_neo4j` | 20 | 0.788 | 0.450 | 0.350 |
-
-> Note the `exact_match = 0.0000` next to `answer_f1 ≈ 0.10`. **Not a fault** —
-> it is the artefact described below, and it is why the reference metric is the
-> judge's strict accuracy rather than EM.
->
-> **And do not draw conclusions from these tables.** They hold 3 to 20 questions
-> per method against the protocol's 1,000. At 20 questions the gap between 0.450
-> and 0.400 is *one item*; at 5, every item is worth 0.20. What they show is that
-> the paths are alive — nothing about which method is better, or which dataset
-> is harder.
-
-`full` mode over the complete 1,000 × 2 protocol is a different order of
-magnitude: four indexing runs across two datasets, 4,000 generations and 8,000
-judge calls.
-
----
-
-## `results/` — the data behind the thesis
-
-**`results/` holds the data from the original experimental run**, at three
-levels of detail — 44 MB, seven CSV files across four subfolders:
-
-| | what it is |
+| | |
 |---|---|
-| `aggregate/` | the study's 22 cells, one per row: two arms × two datasets × four frameworks, plus the three controls |
-| `per_question/` | 22,000 rows — one question answered by one cell, with the answer in full and the judge's verdict |
-| `retrieval/` | 98,599 rows — one retrieved document per row, with its rank |
-| `corpus/` | the 17,634 source documents, once each. The only place the text appears |
+| **the judge** | **roughly $120** for the 22,000 answers of both datasets, extrapolated from the sample |
+| Cognee indexing, MuSiQue | about 38 hours and $3.88 in the original run |
 
-**`results/README.md` explains it column by column**, including three things
-worth knowing before opening the files: the native arm has no retrieval to show,
-Cognee does not return a ranked list, and the dense baseline on MuSiQue was run
-twice.
+The other indexers and the readers were not costed separately; the readers use
+`gpt-4o-mini`, which is much cheaper than the judge's `gpt-4o`.
 
-> Column names are in Portuguese, the language of the thesis.
+Budget days, not an afternoon. `--limit N` cuts the questions the readers
+handle without touching indexing, which is useful for checking the chain on a
+complete dataset before letting it run.
 
-**This is evidence, not output.** Three things follow from that:
+### What reproduction means here
 
-1. **No code in this repository reads that folder.** Not a script, not a config,
-   not a test. Delete it and nothing breaks; the pipeline does not know it
-   exists.
-2. **Running the pipeline does not regenerate it.** These files came from a run
-   over both complete datasets, on the machine where the experimental phase
-   happened. Run this package and you get your own results, which will differ —
-   see «What this package guarantees» below.
-3. **They are here to be read and checked**, not to be fed into anything. This
-   is the material that lets someone compare what the thesis reports against
-   what the pipeline produces.
+The pipeline is not deterministic, so a new run reproduces the **protocol**, not
+the numbers. The 20-question sample shows that the chain works. It says nothing about which method is better: at 20 questions, one item
+is five points.
 
 ---
 
-## Reindexing everything — the full protocol
+## Checking the dissertation against its data
 
-This section is for running **the thesis protocol** rather than the sample:
-1,000 questions on each dataset, with all five methods. The commands are ready;
-what changes against the smoke run is scale, money and time.
-
-> **Read this before running it.** What comes out are not the thesis's numbers —
-> nothing here is deterministic, and the next section explains why. What gets
-> reproduced is the **protocol**.
-
-### What it costs, and how long it takes
-
-Measured during the experimental phase, on MuSiQue. 2Wiki has fewer documents
-(6,119 against 11,515) and is proportionally cheaper to index.
-
-| step | time | cost |
-|---|---|---|
-| `fetch_datasets.py` (both) | minutes | $0 |
-| ingest + persist | minutes | $0 |
-| `vector_rag` indexing | minutes | cents |
-| `lightrag_neo4j` indexing | hours | a few dollars |
-| `ms_graphrag` indexing | hours | a few dollars |
-| **`cognee` indexing** | **~38 sequential hours** | **$3.88** |
-| `hipporag2` indexing | hours | a few dollars |
-| readers (5 methods × 1,000 questions) | hours | a few dollars (`gpt-4o-mini`) |
-| **the judge** (2 passes per answer) | hours | **the expensive step** — `gpt-4o` |
-
-**Budget days, not an afternoon.** And Cognee indexing is the step most worth
-running on its own: it leaks memory on every recall call, and it needs batches
-with `--limit` and a supervisor that resumes.
-
-### The commands
+No API key and no paid call needed:
 
 ```bash
-# 1. both complete datasets (350 MB; 2Wiki pulls a 259 MB zip into cache)
-python scripts/fetch_datasets.py
-
-# 2. the environments, including the three isolated ones
-./scripts/bootstrap_envs.sh --full
-
-# 3. the .env — see the table below for what is required
-cp .env.example .env && $EDITOR .env
-
-# 4. check everything without spending. ALWAYS before the first paid run.
-./scripts/reproduce.sh --dataset musique --version ans_v1.0_eval1k --mode full --dry-run
-
-# 5. MuSiQue, complete
-./scripts/reproduce.sh --dataset musique --version ans_v1.0_eval1k --mode full
-
-# 6. 2Wiki, complete
-./scripts/reproduce.sh --dataset twowiki --version ans_v1.0_eval1k --mode full
+.venv/bin/python -m pytest tests/test_results_match_thesis.py   # Tables 3 and 4 ← results/aggregate/
+.venv/bin/python scripts/compute_judge_agreement.py            # Table B.4 ← the human labels
 ```
 
-Each of those last two is a run that lasts days. `--limit N` cuts the number of
-questions the readers handle without touching indexing, which is useful for
-checking the chain before letting it loose:
+The judge validation reproduces the published agreement from the raw labels:
 
-```bash
-./scripts/reproduce.sh --dataset musique --version ans_v1.0_eval1k --mode full --limit 5
-```
+- **primary protocol**, 120 items: 100% agreement, Cohen's κ = 1.000. The
+  annotator saw the judge's label and verified or corrected it, so anchoring may
+  inflate this figure;
+- **blind supplement**, 30 items: 93.3% agreement (28/30), 16/16 on native-arm
+  refusals. κ is not computed, because the supplement is unbalanced by design.
 
-### The `.env` for a complete run
-
-`.env.example` carries everything, commented. What **must** be filled in:
-
-| variable | value | why |
-|---|---|---|
-| `OPENAI_API_KEY` | your key | without it the judge fails immediately |
-| `MODEL_PROVIDER` | `openai` | the code's default is `fake`, which returns synthetic answers and exists for the test suite |
-| `COGNEE_NEO4J_PASSWORD` | any password | `full` mode only; checked at startup, so you do not find it missing after 38 hours |
-
-What **should not** change unless you know what it does:
-
-| variable | value | why |
-|---|---|---|
-| `READER_GROUNDING` | `v2` | the switch between the thesis's two arms — see the security section |
-| `LIGHTRAG_REUSE_RAG` | `1` | without it LightRAG builds a RAG object per question and runs out of memory |
-
-Everything else has a default that works. The ports — Postgres 15432, Cognee
-Postgres 15433, Neo4j in the 18xxx band — already match `docker-compose.yml`.
-
-> **The `.env` has to be exported, not just read.** `reproduce.sh` does
-> `set -a; . ./.env; set +a` for you. Calling the CLI by hand means doing the
-> same — see the security section.
-
-### Something that only happens on the author's machine
-
-Run this **on the machine where the experimental phase happened** and the
-complete datasets are refused:
-
-```
---dataset of reproduce.sh names dataset 'musique_ans_v1_0_eval1k', one of the
-datasets from the original experimental phase. […] DO NOT remove that container.
-```
-
-Not a fault. Neo4j containers are named after *(method, dataset)* and podman's
-namespace is global to the machine, so indexing the complete dataset there would
-write over the indexes the thesis rests on. **On a machine that never had that
-environment the brake sits inert** and the complete datasets run normally —
-which is exactly what the detection is for. See the security section.
+[`results/README.md`](results/README.md) describes the data column by column,
+and [`validation/s10_judge/README.md`](validation/s10_judge/README.md) the
+annotation protocol.
 
 ---
 
-## What this package guarantees, and what it does not
+## Things that look like faults and are not
 
-**It guarantees** that the chain runs end to end from a clean copy, and that the
-ingested sample is the same one the thesis used. That is verifiable, and it is
-verified.
-
-**It does not guarantee the numbers.** Indexing, reading and judging all use
-language models, and none of that is deterministic. The proof is inside the
-project: re-indexing HippoRAG 2 with the same code on the same machine changed
-the ordering between methods.
-
-Running this reproduces the **experimental protocol**. `smoke` mode shows the
-pipeline works; it does **not** reproduce the thesis's conclusions.
-
-### Three things that look like faults and are not
-
-1. **Low F1 and EM.** Values around F1 ≈ 0.09 and EM ≈ 0 are an artefact of
-   verbosity and of measurement, diagnosed on 2026-06-23. The metric the thesis
-   uses is the **judge's strict accuracy**. Anyone who "fixes" the reader over
-   this is chasing a problem that does not exist.
-2. **`evidence_recall@5` of zero for `vector_rag` on MuSiQue.** There was an
-   identifier namespace problem (`ev_` against `doc_`), it is documented, and the
-   fix was **deliberately not applied**. Understand what was left alone, and why,
-   before touching retrieval metrics.
-3. **Reader refusals.** In the grounded arm (`v2`) the reader is instructed to
-   abstain when the context is not enough. A non-zero refusal rate is the
-   designed behaviour, not a failure.
-
----
-
-## The human validation of the judge
-
-`validation/s10_judge/` holds the judge's labels, **the hand annotation done by
-the author**, and the protocol that produced it. Like `results/`, it is evidence
-from the original study: nothing in this package regenerates the human column.
-
-Reproduce the agreement and Cohen's κ:
-
-```bash
-python scripts/compute_judge_agreement.py
-```
-
-It reproduces the published values from the raw labels: agreement of 1.0 across
-the 120 items of the main protocol, and κ of **0.877** (MuSiQue) and **0.8855**
-(2Wiki) over the 30 supplementary items.
-
-> The main protocol was **verification and correction** with the judge's label
-> pre-filled, not blind labelling, so there is an anchoring risk that tends to
-> inflate agreement. The 30-item supplement was blind. The thesis says so, and
-> so does this.
-
----
-
-## The file that is a security matter
-
-This repository was built next to the environment where the experimental phase
-ran, and **that environment still exists on that machine**, holding the indexes
-and the 4,000 judgements the thesis rests on.
-
-A `.env` with the old URIs connects to those databases and **can write to them**.
-As far as the program is concerned that is a legitimate connection, so nothing
-blocks it.
-
-There is a brake (`benchmark.infra.guard`) that refuses the original
-environment's ports — the 17xxx band and 7689 always, and the default Postgres
-(5432/5433) and Neo4j (7474/7687) ports only while it detects the original
-repository alongside. **If you received this package on a machine that never had
-that environment, there is nothing to worry about**: the detection finds nothing
-and those ports are yours.
-
-This repository's own ports live in `docker-compose.yml`:
-
-| service | port |
-|---|---|
-| benchmark Postgres | 15432 |
-| Cognee Postgres | 15433 |
-| Neo4j | 18xxx band |
-
-### `READER_GROUNDING`
-
-This is the **single-variable** switch between the thesis's two arms, and the
-only thing that changes between them is the instruction given to the reader.
-
-| value | reader |
-|---|---|
-| `v2` (default) | **grounded** — answers only from the retrieved context, and abstains when it is not enough |
-| `v1`, `off`, `free`, `0`, `no`, `none` | **free** — may fall back on parametric knowledge and never declines |
-
-Set it wrong and you produce, **silently**, a different experiment under the
-same name: the output files do not distinguish one from the other.
-`reproduce.sh` always says out loud which one is about to run.
-
-### The `.env` has to be exported, not just read
-
-Settings go through `Settings` (pydantic), which reads the `.env`. But **half the
-adapters read `os.environ` directly** — `MODEL_PROVIDER`, `READER_GROUNDING`,
-`LIGHTRAG_REUSE_RAG` and others — and those variables never arrive that way.
-
-`reproduce.sh` does `set -a; . ./.env; set +a`. Calling the CLI by hand means
-doing the same, or LightRAG fails with `embedding_func is required for vector
-storage`, a message that points nowhere near the cause.
-
----
+- **Low EM and F1** (EM ≈ 0, F1 ≈ 0.1). The reader answers in full sentences,
+  and token-overlap metrics penalise that. The metric the dissertation reports
+  is the judge's strict accuracy.
+- **Native refusals.** Several native pipelines decline to answer when their
+  context is thin. That is their designed behaviour, and the dissertation
+  reports it next to accuracy.
+- **LightRAG's native cell on MuSiQue comes from an experiment named `_v2`.**
+  LightRAG generates its native answer inside the library, before the harness's
+  reader runs, and its adapter never reads `READER_GROUNDING`. The reader
+  instruction does not reach the native answer.
+- **`evidence_recall@5` in the batch runner is not the dissertation's
+  recall@5.** It uses each run's own top-k (40 for LightRAG, 20 for Microsoft
+  GraphRAG). The dissertation's figures come from the canonical audit
+  (`scripts/retrieval_audit_canonic.py`), which cuts every method at five. An
+  earlier identifier bug that zeroed this metric is fixed; see
+  `docs/decisions/0001-retrieval-evaluation-granularity.md`.
 
 ## Traps that cost real time
 
-`scripts/README.md` has all of them, with the detail. These bite first:
+[`scripts/README.md`](scripts/README.md) has all of them. These bite first:
 
+- **The `.env` has to be exported, not just read.** Several adapters read
+  `os.environ` directly. `reproduce.sh` does `set -a; . ./.env; set +a`; calling
+  the CLI by hand means doing the same, or LightRAG fails with
+  `embedding_func is required for vector storage`.
 - **`LIGHTRAG_REUSE_RAG=1` is mandatory.** Without it LightRAG builds a RAG
   object per question and runs out of memory.
-- **HippoRAG 2 indexing is a single pass.** Indexing in batches corrupts the
-  graph: 19,392,908 edges over 319,817 distinct pairs, against roughly 1.58M for
-  a healthy one. The runner refuses a used workspace, and `--batch-size` does not
-  exist.
+- **HippoRAG 2 indexes in a single pass.** Indexing in batches corrupts the
+  graph: 19,392,908 edges over 319,817 distinct pairs, against 493,714 in the
+  healthy one. The runner refuses a used workspace.
 - **Neo4j containers are named after *(method, dataset)*** and are global to
-  podman, not to the folder. That is why the smoke samples have identifiers of
-  their own.
-- **Compose prefixes volumes with the directory name.** Bringing this up from a
-  folder with a different name creates an empty database.
+  podman, not to the folder.
+- **Compose prefixes volumes with the directory name.** Bringing the stack up
+  from a folder with a different name gives you an empty database.
 - **Under rootless podman**, Neo4j port forwarding only comes back after `stop`
   followed by `start`.
 
+The ports are Postgres 15432 and Cognee's Postgres 15433
+(`docker-compose.yml`), and Neo4j in the 18xxx band (`docker-compose.yml` and
+`configs/infra/neo4j_ports.yaml`). The harness refuses the ports of the
+original experimental environment (`benchmark.infra.guard`): 17474–17478,
+17687–17691 and 7689 always, and the default Postgres and Neo4j ports only when
+it finds that environment on the same machine.
+
 ---
 
-## Layout
+## Citation
 
+```bibtex
+@mastersthesis{pereira2026graphrag,
+  author = {Pereira, Eduardo Gon{\c{c}}alo},
+  title  = {Graph-Based Retrieval-Augmented Generation for Multi-hop Question
+            Answering: A Two-Arm Evaluation of Four Frameworks},
+  school = {National College of Ireland},
+  type   = {MSc Research Project},
+  year   = {2026}
+}
 ```
-src/benchmark/      the core: ingestion, methods, agents, evaluation, CLI
-scripts/            indexers, native readers, judge, statistics
-configs/            datasets, methods, experiments, the Neo4j port registry
-requirements/       manifests for the three isolated environments
-tests/              the proof that the core works
 
-data/               the datasets: raw files and canonical samples
-results/            the data behind the thesis — evidence, not output
-validation/         the human validation of the judge — hand annotation
-```
+## License
 
-The bottom three are **data**. `src/`, `scripts/` and `configs/` are what you
-run; `data/` is what gets read; `results/` and `validation/` are what the
-original study produced, kept here so it can be checked.
-
-## Documentation
-
-- **`scripts/README.md`** — architecture and traps: why there are four Python
-  environments, the names that have to line up between indexer and reader, the
-  design of the per-*(method, dataset)* Neo4j containers, the three brakes, and
-  what does not get changed and why. Read it before touching the code or calling
-  a script by hand.
-- **`results/README.md`** — the results files, column by column.
-- **`validation/s10_judge/README.md`** — the human annotation protocol.
+The code is under the [MIT](LICENSE) license. The datasets are not in this
+repository: `scripts/fetch_datasets.py` downloads them, MuSiQue from Hugging
+Face mirrors and 2WikiMultiHopQA from the HippoRAG repository, and checks their
+sha256. Question text, gold answers and document text from both datasets appear
+in `results/` and `validation/`, and remain under the datasets' own licenses.
