@@ -7,8 +7,8 @@ discarded along the way, and none of them made it into these files: the
 grounded reader (`_v2`), `first_results`, `cognee_fixed`, the HippoRAG 2 index
 built in batches, the `_rephrased` variants, and every smoke run and gate.
 
-Column names are in Portuguese, the language of the thesis. The prose here is
-in English because it travels better.
+Column names are in Portuguese, the language the study was run in. The prose
+here is in English, like the dissertation.
 
 ## How the study is laid out
 

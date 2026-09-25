@@ -1,7 +1,8 @@
 [project]
 name = "multiagent-memory-benchmark"
 version = "0.1.0"
-description = "Research benchmark framework for comparing external memory mechanisms in single-agent and multi-agent QA."
+description = "A two-arm evaluation of four graph-based RAG frameworks on multi-hop question answering."
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

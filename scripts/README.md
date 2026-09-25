@@ -153,8 +153,8 @@ that the detection once picked the wrong tree.
 ## 5. HippoRAG 2 indexing is a single pass
 
 **Indexing in batches corrupts the graph.** Measured: 19,392,908 edges over
-319,817 distinct pairs — a multiplicity around 60, against roughly 1.58M for a
-healthy graph.
+319,817 distinct pairs — a multiplicity around 60, against 493,714 edges over
+the same pairs in the healthy single-pass graph (Table A.1 of the thesis).
 
 The cause is OpenIE re-deriving the edges on every call to `index()`. The
 embedding store's hash deduplication covers **passages**, not **edges**, and
@@ -324,10 +324,11 @@ went missing once:
 - **`bm25` was removed** because it left the thesis. The migration numbering has
   a hole at 002 **on purpose** — renumbering `003` would break databases that
   have already been migrated.
-- **`evidence_recall@5` of zero for `vector_rag` on MuSiQue** has a documented
-  cause (an identifier namespace clash, `ev_` against `doc_`) and the fix was
-  **deliberately not applied**. Understand what was left alone, and why, before
-  touching retrieval metrics.
+- **`evidence_recall@5` of zero for `vector_rag` on MuSiQue** was an identifier
+  namespace clash (`ev_` against `doc_`). It is fixed, with a regression test
+  (`tests/test_evaluator.py`); see
+  `docs/decisions/0001-retrieval-evaluation-granularity.md`. The thesis's
+  retrieval figures come from the canonical audit, not from this metric.
 - **Low F1 and EM are not a fault** — they are an artefact of verbosity and of
   measurement. The thesis reports the judge's strict accuracy.
 
