@@ -1,0 +1,14 @@
+method_id: hipporag2
+enabled: true
+description: >
+  HippoRAG 2 (Jimenez Gutierrez et al., ICML 2025) — OpenIE + KG denso-esparso +
+  Personalized PageRank via python-igraph. Substrato de grafo SEM Neo4j (ficheiros
+  locais em artifacts/{slug}/hipporag2/workspace). Dependências pesadas isoladas em
+  .venvs/hipporag2 (subprocess; ver .venvs/hipporag2.lock.txt). Hiperparâmetros =
+  defaults publicados (Tab. 13); LLM gpt-4o-mini; embedder OpenAI text-embedding-3-small
+  (declarado: difere do NV-Embed-v2 do paper — comparação controlada, não réplica).
+artifact_subdir: hipporag2
+index:
+  batch_size: 100
+query:
+  top_k: 5

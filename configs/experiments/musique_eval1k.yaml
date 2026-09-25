@@ -1,0 +1,40 @@
+# O protocolo completo sobre o MuSiQue — 1000 perguntas, 11515 documentos.
+#
+# ISTO CUSTA DINHEIRO A SÉRIO. Não é a amostra de smoke. Antes de o correr, leia
+# a secção «Reindexar tudo» do README, que tem os números medidos na fase
+# experimental: a indexação do Cognee sobre este dataset custou $3,88 e ~38 h
+# sequenciais, e o juiz é o passo caro por larga margem.
+#
+# Corre-se com:
+#   ./scripts/reproduce.sh --dataset musique --version ans_v1.0_eval1k --mode full
+#
+# As 1000 perguntas são uma amostra `random.Random(42).sample(...)` sobre a
+# divisão de validação — determinista dado o mesmo ficheiro bruto, e é o
+# `configs/datasets/fingerprints/musique_ans_v1.0_eval1k.json` que garante que é
+# o mesmo. O `benchmark ingest` recusa escrever uma amostra divergente.
+#
+# NUMA MÁQUINA COM O AMBIENTE EXPERIMENTAL ORIGINAL AO LADO ISTO NÃO CORRE, e é
+# de propósito: os containers Neo4j deste dataset têm o nome dos que guardam os
+# índices da dissertação. Ver `guard.exigir_dataset_permitido`. Numa máquina
+# limpa — a de quem recebe o pacote — o travão fica inerte.
+
+experiment_id: musique_ans_v1.0_eval1k
+dataset_id: musique
+dataset_version: ans_v1.0_eval1k
+
+agent_modes:
+  - single_agent
+
+# Os cinco métodos do protocolo. O `reproduce.sh --mode full` corre-os todos:
+# os três primeiros pela CLI, o `cognee` e o `hipporag2` por script próprio,
+# porque despacham para ambientes isolados.
+#
+# É o `ms_graphrag` — a implementação oficial em ficheiros/parquet, indexada
+# pela CLI do `.venvs/graphrag` — e NÃO o `ms_graphrag_neo4j`, que não tem
+# cliente vivo e levanta «live execution is not configured».
+methods:
+  - vector_rag
+  - lightrag_neo4j
+  - ms_graphrag
+  - cognee
+  - hipporag2

@@ -1,0 +1,3 @@
+method_id: single_document_context
+enabled: true
+description: Baseline that provides the relevant source document as context.

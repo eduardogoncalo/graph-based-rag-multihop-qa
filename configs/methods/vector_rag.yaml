@@ -1,0 +1,10 @@
+method_id: vector_rag
+enabled: true
+description: Vector retrieval baseline using method-isolated pgvector storage.
+embedding_provider: deterministic
+embedding_model: deterministic-test-embedding
+embedding_dimension: 16
+top_k: 5
+storage:
+  table: vector_rag_chunk_embeddings
+  distance: cosine

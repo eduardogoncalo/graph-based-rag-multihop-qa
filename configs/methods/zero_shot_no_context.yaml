@@ -1,0 +1,3 @@
+method_id: zero_shot_no_context
+enabled: true
+description: No-memory baseline without retrieved or document context.

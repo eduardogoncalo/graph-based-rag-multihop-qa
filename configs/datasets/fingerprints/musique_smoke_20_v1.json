@@ -1,0 +1,31 @@
+{
+  "dataset_id": "musique_smoke_20",
+  "dataset_version": "v1",
+  "origem": "gerado a partir de musique_ans_v1.0_dev.jsonl (sha256 15fa6379...), 2026-08-09",
+  "num_questions": 20,
+  "num_documents": 399,
+  "sha256_question_ids": "947a429eba5322bb6b532482030b83d74a13cd2c965e98b0f313157be42bc97f",
+  "sha256_document_ids": "e2c5812ae824016e7642ff35e2650b21e65fc2749b7a8c3d97e29d11bfeec519",
+  "question_ids": [
+    "q_06fd8e8984c3bf7c",
+    "q_0a82fb48a7bcd238",
+    "q_10e073aac2851f72",
+    "q_1515984a0cf73e89",
+    "q_2757357873b3142f",
+    "q_3f8c7449e0fd4b8c",
+    "q_52236274dd5ec621",
+    "q_5b34958f6ba11a40",
+    "q_64707f6d7aa05d72",
+    "q_78622a5c19a24907",
+    "q_7b81a945f3c798bd",
+    "q_8a9dcb192d10063a",
+    "q_a57e36340c109ec9",
+    "q_a813cb526aecb9dd",
+    "q_b53a45e0a5a8c500",
+    "q_b89a3472ab76235e",
+    "q_ef6b9a49000ea98b",
+    "q_f2aecdfdca57b717",
+    "q_f8fd3e956b0db7d7",
+    "q_fa665866d58a450a"
+  ]
+}

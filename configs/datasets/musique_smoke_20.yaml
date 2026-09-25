@@ -1,0 +1,41 @@
+dataset_id: musique_smoke_20
+dataset_version: v1
+name: MuSiQue-Ans (amostra de smoke, 20 perguntas)
+
+# PORQUE É UM DATASET E NÃO UMA OPÇÃO.
+#
+# A tentação é correr `benchmark ingest --dataset musique --sample-size 20`. Não
+# serve, por duas razões, e ambas foram verificadas:
+#
+# 1. O `canonical_path` vem daqui, e o `--sample-size` não lhe toca. Uma
+#    ingestão de 20 perguntas sobre o config do `musique` escreve POR CIMA do
+#    canónico das 1000 — ficam 20 perguntas e 399 documentos onde estavam 1000
+#    e 11515, sem aviso nenhum.
+# 2. Os containers Neo4j têm nome derivado de (método, dataset). Correr o smoke
+#    com o identificador `musique` ia direito aos containers que guardam os
+#    índices da dissertação.
+#
+# Com identificador próprio, cada coisa tem o seu sítio: canónico próprio,
+# container próprio, volume próprio, portas próprias no registo.
+
+raw_path: data/raw/musique
+canonical_path: data/canonical/musique_smoke_20_v1
+splits_path: data/splits/musique_smoke_20_v1
+
+# Mesmo protocolo do eval1k, só que mais pequeno: amostra aleatória sobre a
+# divisão de validação, com a mesma semente. O ficheiro bruto é o mesmo — o
+# `fetch_datasets.py` só descarrega um.
+sample:
+  split: validation
+  num_questions: 20
+  seed: 42
+
+# O QUE ISTO CUSTA, E PORQUE NÃO É PROPORCIONAL AO NÚMERO DE PERGUNTAS.
+#
+# 20 perguntas dão **399 documentos** e 414 chunks (medido a 2026-08-09). Cada
+# pergunta do MuSiQue arrasta ~20 parágrafos, dos quais só 2 ou 3 são suporte —
+# os outros são distractores, e fazem parte do corpus na mesma.
+#
+# É o número de DOCUMENTOS que paga a indexação, não o de perguntas. Quem quiser
+# encolher isto mais, encolhe `num_questions`, e o corpus encolhe com ele na
+# mesma proporção.

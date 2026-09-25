@@ -1,0 +1,31 @@
+{
+  "dataset_id": "twowiki_smoke_20",
+  "dataset_version": "v1",
+  "origem": "gerado a partir de 2wikimultihopqa.json (sha256 895cba29...) e 2wikimultihopqa_corpus.json (sha256 9d6e3529...), os ficheiros de avaliacao publicados pelo HippoRAG; corpus restringido as passagens das 20 perguntas amostradas com seed 42, 2026-08-10",
+  "num_questions": 20,
+  "num_documents": 191,
+  "sha256_question_ids": "562957c1933251e967b965c32886bb92736a406da6175eba51386e71fd3c9dc2",
+  "sha256_document_ids": "e13f9cb4113d9baaed1facce55e28782930d567ad3a55ccafc07a01edd7c9bd4",
+  "question_ids": [
+    "q_0cdf703099a645ae",
+    "q_105a14634dc8eac2",
+    "q_166063e4c963566e",
+    "q_2633bfad6002a15c",
+    "q_2e6d320f9b47d25f",
+    "q_4ec93c18e6e18779",
+    "q_5b4769be2e4ad066",
+    "q_5fbfd88cf8d482da",
+    "q_8163235d481322a9",
+    "q_931761ca9bfdf337",
+    "q_9c05828ef6d030ff",
+    "q_bc42f92c8c53f84b",
+    "q_bd12be762731736d",
+    "q_c32bb322eb9c950e",
+    "q_cc7ede49ab28e29f",
+    "q_d12ad13d9c5a3d6f",
+    "q_dbefae2d32ef0b27",
+    "q_e2500a4bb04a847b",
+    "q_ef8047c1553c7606",
+    "q_fd9683bac6352cc9"
+  ]
+}

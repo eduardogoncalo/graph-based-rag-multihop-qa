@@ -1,0 +1,13 @@
+dataset_id: twowiki
+dataset_version: ans_v1.0_eval1k
+name: 2WikiMultiHopQA (as EXATAS 1000 perguntas + corpus 6.119 do HippoRAG/HippoRAG 2)
+raw_path: data/raw/2wikimultihop
+canonical_path: data/canonical/twowiki_ans_v1.0_eval1k
+splits_path: data/splits/twowiki_ans_v1.0_eval1k
+
+# PROVENIÊNCIA (decisão do autor 2026-07-09): perguntas e corpus vêm dos ficheiros
+# de avaliação publicados no repo OSU-NLP-Group/HippoRAG (reproduce/dataset/
+# 2wikimultihopqa.json + 2wikimultihopqa_corpus.json) para comparabilidade
+# item-idêntica com o HippoRAG 2 (ICML 2025). supporting_facts/type recuperados
+# do dev.json original por _id; a amostra seed-42 anterior foi arquivada em
+# *.seed42.bak e removida do Postgres em 2026-07-09.

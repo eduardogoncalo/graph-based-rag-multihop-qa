@@ -1,0 +1,119 @@
+# Registro FIEL dos runs executados — MuSiQue eval1k (item 0.6b do plano)
+# Fonte: Postgres (runs/retrieval_results/experiments) consultado em 2026-07-02 + código à época.
+# Regra: este arquivo descreve O QUE RODOU, não o que se planeja rodar. Não editar retroativamente;
+# runs novos ganham novas entradas.
+
+dataset:
+  dataset_id: musique
+  dataset_version: ans_v1.0_eval1k
+  questions: 1000
+  golds_per_question: 2-4 (por hop)
+
+shared_reader:
+  framework: LangGraph linear (query_planner -> retriever -> domain_reasoner -> evidence_auditor -> final_answer)
+  agent_mode: single_agent
+  model: gpt-4o-mini (OPENAI_CHAT_MODEL)
+  # Runs abaixo NÃO enviavam temperature (default da API, ~1.0) e não havia seed.
+  # A Responses API (openai 2.41.0) não expõe seed; a partir de 2026-07-02 o código
+  # envia temperature=0 (OPENAI_CHAT_TEMPERATURE, default 0.0) e captura usage.
+  double_generation_note: >
+    domain_reasoner gera rascunho e final_answer re-gera a resposta final a partir do rascunho
+    (2 chamadas LLM por pergunta em todos os runs).
+
+judge:
+  id: judge_v1
+  model: gpt-4o
+  passes: 2
+  scoreable: 992
+
+experiments:
+  - experiment_id: musique_eval1k_first_results
+    runs:
+      - method_id: vector_rag
+        date: 2026-06-22
+        n: 1000
+        reader_version: v1 (livre — sem instrução de grounding; prompt incluía "Method:")
+        top_k: 5
+        top_k_unit: chunks (= documentos; 1 chunk/doc no corpus MuSiQue)
+        retrieval: pgvector IVFFlat **COM BUG** (índice criado antes do upsert + probes=1 → ~1% do corpus varrido)
+        embedding_model: text-embedding-3-small
+        judge_results: {strict: 0.2218, lenient: 0.253, correct: 220, incorrect: 511, refusal: 199}
+        status: SUPERSEDED por musique_eval1k_v2_grounded (bug de retrieval)
+      - method_id: lightrag_neo4j
+        date: 2026-06-22
+        n: 1000
+        reader_version: v1 (livre)
+        top_k: 5
+        top_k_unit: entidades/relações (QueryParam.top_k do lightrag-hku 1.5.0 — NÃO documentos)
+        chunk_top_k_efetivo: 20 (default do framework; não sobrescrito pelo benchmark)
+        query_mode: mix
+        framework: lightrag-hku 1.5.0, grafo em Neo4j (porta 17688), LIGHTRAG_REUSE_RAG=1
+        judge_results: {strict: 0.4315, lenient: 0.4698, correct: 428, incorrect: 397, refusal: 91}
+        retrieval_recall_at5_doc_level: 0.546 (recomputado 2026-07-02, parser corrigido)
+      - method_id: cognee
+        date: 2026-06-30
+        n: 100 (ABORTADO — superseded por musique_eval1k_cognee_fixed)
+        status: descartar nas análises
+
+  - experiment_id: musique_eval1k_cognee_fixed
+    runs:
+      - method_id: cognee
+        date: 2026-06-30..07-01
+        n: 1000
+        reader_version: v1 (livre)
+        top_k: 5
+        top_k_unit: elementos de grafo (search GRAPH_COMPLETION; contexto vira 1 blob ~2.7 docs/query)
+        framework: cognee 1.1.2, venv isolado (.venvs/cognee), Neo4j Option C (porta 17689)
+        judge_results: {strict: 0.375, lenient: 0.416, correct: 372, incorrect: 414, refusal: 124}
+        retrieval_recall_at5_doc_level: 0.434 (blob explodido em document_ids, 2026-07-02)
+        note: quebrou por reboot e retomou do Postgres (440->1000)
+
+  - experiment_id: musique_eval1k_v2_grounded
+    runs:
+      - method_id: vector_rag
+        date: 2026-07-01..07-02
+        n: 1000
+        reader_version: v2 (grounded — "answer using ONLY the retrieved chunks" + ancoragem à época
+          do corpus + abster em vez de chutar; "Method:" removido do prompt; nodes.py:_retrieval_context_prompt)
+        top_k: 5
+        top_k_unit: chunks (= documentos)
+        retrieval: pgvector busca exata (probes=lists) + índice criado APÓS a carga (fix 2026-07-01)
+        embedding_model: text-embedding-3-small
+        judge_results: {strict: 0.2732, lenient: 0.3049, correct: 271, incorrect: 387, refusal: 271}
+        retrieval_recall: {at5: 0.555, at10: 0.648, at20: 0.735}
+        note: v2 muda DUAS coisas vs v1 (retrieval consertado + leitor grounded); delta não atribuível só ao retrieval
+
+  - experiment_id: musique_eval1k_closed_book
+    runs:
+      - method_id: zero_shot_no_context
+        date: 2026-07-02
+        n: 1000
+        reader_version: prompt próprio closed-book (sem contexto, sem grounding; "answer from your
+          own knowledge... say you do not know instead of guessing"; nodes.py:_closed_book_prompt)
+        top_k: n/a (sem retrieval por construção)
+        temperature: 0.0 (primeiro run com temperature enviada)
+        usage: capturado (custo geração US$0.075; ~266 tokens/q)
+        judge_results: {strict: 0.2087, lenient: 0.246, correct: 207, partial: 74, incorrect: 532,
+          refusal: 179, gold_suspect: 8, agreement: 0.966, judge_cost_usd: 5.59}
+        role: PISO paramétrico (quanto o gpt-4o-mini sabe sem retrieval)
+
+  - experiment_id: musique_eval1k_oracle_gold
+    runs:
+      - method_id: single_document_context
+        date: 2026-07-02
+        n: 1000
+        reader_version: v2 (grounded, idêntico ao vector v2)
+        top_k: n/a (TODOS os gold docs injetados; 2-4 docs/pergunta; recall=1.0 por construção)
+        temperature: 0.0
+        usage: capturado (custo geração US$0.136; ~665 tokens/q)
+        judge_results: {strict: 0.3931, lenient: 0.4259, correct: 390, partial: 65, incorrect: 319,
+          refusal: 218, gold_suspect: 8, agreement: 0.97, judge_cost_usd: 5.59}
+        role: TETO do leitor v2 grounded (retrieval perfeito por construção)
+        warning: 218 recusas e 319 erros COM os golds na mão — falha pura de leitura/composição;
+          comparação com lightrag/cognee (leitor v1 livre) é confundida pelo leitor até o 0.7 rodar
+
+comparability_warnings:
+  - "Trio NÃO comparável: lightrag/cognee usam leitor v1, vector atual usa v2 — exige item 0.7 (condição A defaults)."
+  - "top_k=5 tem unidade DIFERENTE por método (chunks vs entidades vs elementos de grafo) — nem defaults nem matched;
+     ver seção 'Fundamentação por fontes' no plano (matched = docs ao leitor; lightrag via chunk_top_k)."
+  - "Runs até 2026-07-02 sem temperature fixada e sem usage capturado (colunas NULL)."

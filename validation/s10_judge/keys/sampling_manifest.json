@@ -1,0 +1,47 @@
+{
+  "seed": 42,
+  "per_dataset": 60,
+  "labels": [
+    "correct",
+    "partial",
+    "incorrect",
+    "refusal",
+    "gold_suspect"
+  ],
+  "cells": {
+    "lightrag | controlado": "lightrag_v1free",
+    "ms_graphrag | controlado": "ms_graphrag_v1free",
+    "hipporag2 | controlado": "hipporag2_v1free",
+    "cognee | controlado": "cognee_v1free_k5",
+    "lightrag | nativo": "lightrag_native",
+    "ms_graphrag | nativo": "ms_graphrag_native",
+    "hipporag2 | nativo": "hipporag2_native",
+    "cognee | nativo": "cognee_native",
+    "vector_denso | controlado": "vector_v1free"
+  },
+  "quotas": {
+    "musique": {
+      "lightrag | controlado": 7,
+      "ms_graphrag | controlado": 7,
+      "hipporag2 | controlado": 7,
+      "cognee | controlado": 6,
+      "lightrag | nativo": 7,
+      "ms_graphrag | nativo": 7,
+      "hipporag2 | nativo": 6,
+      "cognee | nativo": 6,
+      "vector_denso | controlado": 7
+    },
+    "twowiki": {
+      "lightrag | controlado": 7,
+      "ms_graphrag | controlado": 7,
+      "hipporag2 | controlado": 7,
+      "cognee | controlado": 7,
+      "lightrag | nativo": 7,
+      "ms_graphrag | nativo": 7,
+      "hipporag2 | nativo": 6,
+      "cognee | nativo": 6,
+      "vector_denso | controlado": 6
+    }
+  },
+  "sampling": "sorted by question_id, random.Random(seed).sample, natural label distribution (no balancing)"
+}

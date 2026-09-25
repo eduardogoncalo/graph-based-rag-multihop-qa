@@ -1,0 +1,22 @@
+method_id: ms_graphrag_neo4j
+enabled: true
+description: Neo4j-backed Microsoft GraphRAG-style method based on neo4j-contrib/ms-graphrag-neo4j.
+neo4j_uri_env: GRAPHRAG_NEO4J_URI
+neo4j_user_env: GRAPHRAG_NEO4J_USER
+neo4j_password_env: GRAPHRAG_NEO4J_PASSWORD
+neo4j_database_env: GRAPHRAG_NEO4J_DATABASE
+artifact_subdir: ms_graphrag_neo4j
+dependency_mode: optional
+index:
+# max_documents: quantos documentos do canónico entram no índice.
+#
+# ERA 5, e isso era um valor de desenvolvimento que viajou por engano. Cinco
+# documentos não são um índice — são um teste de fumo, e a CLI aplicava-o em
+# silêncio a qualquer dataset. A indexação oficial da dissertação nunca o usou:
+# scripts/twowiki_lightrag_index.py passa explicitamente max_documents=None.
+#
+# `null` = todos. Quem quiser limitar, limita aqui e a CLI diz quantos de
+# quantos indexou.
+  max_documents: null
+query:
+  top_k: 5

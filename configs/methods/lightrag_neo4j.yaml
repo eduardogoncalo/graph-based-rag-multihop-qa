@@ -1,0 +1,34 @@
+method_id: lightrag_neo4j
+enabled: true
+description: Neo4j-backed LightRAG method using an isolated LightRAG Neo4j backend.
+# Option C (per-dataset isolation): the connection is resolved per
+# (method, dataset, version) from configs/infra/neo4j_ports.yaml via
+# resolve_lightrag_option_c() and injected as explicit overrides — the
+# *_env names below remain the fallback / anti-host guard.
+neo4j_uri_env: LIGHTRAG_NEO4J_URI
+neo4j_user_env: LIGHTRAG_NEO4J_USER
+neo4j_password_env: LIGHTRAG_NEO4J_PASSWORD
+neo4j_database_env: LIGHTRAG_NEO4J_DATABASE
+artifact_subdir: lightrag_neo4j
+dependency_mode: optional
+index:
+# max_documents: quantos documentos do canónico entram no índice.
+#
+# ERA 5, e isso era um valor de desenvolvimento que viajou por engano. Cinco
+# documentos não são um índice — são um teste de fumo, e a CLI aplicava-o em
+# silêncio a qualquer dataset. A indexação oficial da dissertação nunca o usou:
+# scripts/twowiki_lightrag_index.py passa explicitamente max_documents=None.
+#
+# `null` = todos. Quem quiser limitar, limita aqui e a CLI diz quantos de
+# quantos indexou.
+  max_documents: null
+query:
+  default_mode: mix
+  supported_modes:
+    - mix
+    - local
+    - global
+    - hybrid
+    - naive
+    - bypass
+  top_k: 5

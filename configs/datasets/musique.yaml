@@ -1,0 +1,11 @@
+dataset_id: musique
+dataset_version: ans_v1.0_eval1k
+name: MuSiQue-Ans (1k eval subset, IRCoT/HippoRAG protocol)
+raw_path: data/raw/musique
+canonical_path: data/canonical/musique_ans_v1.0_eval1k
+splits_path: data/splits/musique_ans_v1.0_eval1k
+
+sample:
+  split: validation         # MuSiQue test set is private; use the public validation split
+  num_questions: 1000       # IRCoT / HippoRAG NeurIPS 2024 protocol
+  seed: 42                  # reproducibility

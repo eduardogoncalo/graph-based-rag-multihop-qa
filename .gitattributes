@@ -1,0 +1,33 @@
+# What does NOT travel in `git archive`, and therefore not in the delivery zip.
+#
+# The repository keeps everything — the working history is useful to whoever
+# works here. What gets excluded is excluded from the package the examiner
+# receives, which is code, data, and what explains them.
+#
+# Build the zip with `scripts/empacotar_entrega.sh`, which honours this file and
+# also adds `data/` (which git ignores) without its 247 MB cache.
+
+# ---- THE .md RULE: none of them travel, EXCEPT the READMEs ----
+#
+# By blanket exclusion and explicit re-opening, not by a list of names. A list
+# protects against what already exists; this protects against the next file
+# somebody adds without remembering to exclude it — which is how these things
+# escape.
+#
+# `-export-ignore` unsets the attribute set by the line above, and is the only
+# way to carve out an exception in gitattributes.
+*.md                export-ignore
+README.md           -export-ignore
+**/README.md        -export-ignore
+
+# ---- docs/ ----
+# Implementation specs and architecture decisions, written during the
+# experimental phase and annotated where they were superseded. Whatever still
+# matters from them to whoever receives the package was moved into
+# `scripts/README.md`, which is written to be read from the outside.
+docs/               export-ignore
+
+# ---- Tooling for whoever prepares the delivery ----
+# The packager is of no use to whoever receives the package — it serves the
+# person building it.
+scripts/empacotar_entrega.sh  export-ignore

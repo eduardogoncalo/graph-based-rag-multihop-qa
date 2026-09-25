@@ -1,0 +1,32 @@
+# O protocolo completo sobre o 2Wiki — 1000 perguntas, 6119 documentos.
+#
+# ISTO CUSTA DINHEIRO A SÉRIO. Ver o cabeçalho do `musique_eval1k.yaml`, e a
+# secção «Reindexar tudo» do README.
+#
+# Corre-se com:
+#   ./scripts/reproduce.sh --dataset twowiki --version ans_v1.0_eval1k --mode full
+#
+# PROVENIÊNCIA, e é uma decisão do autor de 2026-07-09: as perguntas e o corpus
+# vêm dos ficheiros de avaliação publicados pelo HippoRAG
+# (OSU-NLP-Group/HippoRAG, reproduce/dataset/), para comparabilidade item a item
+# com o HippoRAG 2. **O 2Wiki não é amostrado** — são as exactas 1000 perguntas
+# deles. Da distribuição original tira-se só o `dev.json`, para recuperar
+# `supporting_facts` e `type` por `_id`.
+#
+# NUMA MÁQUINA COM O AMBIENTE EXPERIMENTAL ORIGINAL AO LADO ISTO NÃO CORRE, pela
+# mesma razão que o MuSiQue: colisão de nome de container. Ver
+# `guard.exigir_dataset_permitido`.
+
+experiment_id: twowiki_ans_v1.0_eval1k
+dataset_id: twowiki
+dataset_version: ans_v1.0_eval1k
+
+agent_modes:
+  - single_agent
+
+methods:
+  - vector_rag
+  - lightrag_neo4j
+  - ms_graphrag
+  - cognee
+  - hipporag2

@@ -1,0 +1,46 @@
+dataset_id: twowiki_smoke_20
+dataset_version: v1
+name: 2WikiMultiHopQA (amostra de smoke, 20 perguntas)
+
+# PORQUE EXISTE, E PORQUE NÃO EXISTIA ANTES.
+#
+# O 2Wiki é metade do protocolo da dissertação — o README promete um benchmark
+# «sobre MuSiQue e 2WikiMultiHopQA» na primeira linha — mas até 2026-08-10
+# **nenhuma pergunta do 2Wiki tinha sido respondida a partir deste
+# repositório**. Todas as medições da validação de 2026-08-09 foram MuSiQue.
+# Não por decisão: por não haver amostra pequena com que o fazer, e o dataset
+# completo custar dinheiro a sério.
+#
+# Vale o mesmo que o `musique_smoke_20.yaml` diz sobre ser um dataset e não um
+# `--sample-size`: canónico próprio, containers próprios, volumes próprios,
+# portas próprias no registo. Ver esse ficheiro para o detalhe.
+
+raw_path: data/raw/2wikimultihop
+canonical_path: data/canonical/twowiki_smoke_20_v1
+splits_path: data/splits/twowiki_smoke_20_v1
+
+# Mesma proveniência do `twowiki` eval1k: os ficheiros de avaliação publicados
+# pelo HippoRAG (decisão de 2026-07-09). O `fetch_datasets.py` só descarrega um
+# conjunto — o config faz o resto.
+sample:
+  num_questions: 20
+  seed: 42
+
+# O QUE ISTO CUSTA, E PORQUE O NÚMERO NÃO SE PARECE COM O DO MUSIQUE.
+#
+# No MuSiQue, 20 perguntas dão 399 documentos: os documentos são recolhidos das
+# perguntas seleccionadas, portanto o corpus encolhe com elas.
+#
+# No 2Wiki o corpus é um ficheiro publicado à parte, com 6119 passagens, e não
+# depende das perguntas. Amostrar sem mexer nele daria uma «amostra de smoke»
+# com 6119 documentos — cerca de treze horas só de indexação do LightRAG,
+# contra os ~50 minutos das 399 do MuSiQue.
+#
+# Por isso o carregador restringe o corpus às passagens que aparecem no
+# contexto das perguntas amostradas, que é exactamente a regra do MuSiQue e
+# mantém os distractores de cada pergunta. Ver
+# `_chaves_de_contexto` em src/benchmark/ingestion/twowiki_loader.py.
+#
+# O caminho do `twowiki` eval1k não passa por nada disto: não tem bloco
+# `sample:`, portanto carrega as 1000 perguntas contra o corpus inteiro, como
+# sempre carregou.

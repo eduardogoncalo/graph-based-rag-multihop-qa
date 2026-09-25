@@ -1,0 +1,29 @@
+# O experimento de smoke do 2Wiki — a outra metade do protocolo.
+#
+# Criado a 2026-08-10, ao mesmo tempo que o `configs/datasets/twowiki_smoke_20.yaml`.
+# Até essa data **nenhuma pergunta do 2Wiki tinha sido respondida a partir deste
+# repositório**: todas as medições da validação de 2026-08-09 foram MuSiQue, por
+# não haver amostra pequena com que exercitar o outro dataset.
+#
+# Corre-se com:
+#   ./scripts/reproduce.sh --dataset twowiki_smoke_20
+#   ./scripts/reproduce.sh --dataset twowiki_smoke_20 --mode full
+#
+# O QUE PROVA, E O QUE NÃO PROVA. O mesmo que o smoke do MuSiQue: a cadeia
+# inteira sobre uma amostra pequena. **Não reproduz as conclusões da
+# dissertação** — são 20 perguntas contra as 1000 do protocolo, e a indexação e
+# o julgamento são feitos por modelos de linguagem, que não são deterministas.
+
+experiment_id: twowiki_smoke_20_v1
+dataset_id: twowiki_smoke_20
+dataset_version: v1
+
+agent_modes:
+  - single_agent
+
+# Os mesmos dois métodos do smoke do MuSiQue, e pela mesma razão: correm com o
+# ambiente principal e mais nada. O modo `full` acrescenta `ms_graphrag`,
+# `cognee` e `hipporag2`, que exigem os ambientes isolados.
+methods:
+  - vector_rag
+  - lightrag_neo4j

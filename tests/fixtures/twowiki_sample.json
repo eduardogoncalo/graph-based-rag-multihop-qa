@@ -1,0 +1,34 @@
+[
+  {
+    "_id": "q1-comparison",
+    "question": "Which film was released first, Film Alpha or Film Beta?",
+    "answer": "Film Alpha",
+    "answer_id": "Q100",
+    "type": "comparison",
+    "context": [
+      ["Film Alpha", ["Film Alpha is a 1990 drama.", "It was directed by Ana Silva."]],
+      ["Film Beta", ["Film Beta is a 1995 comedy.", "It was directed by Rui Costa."]],
+      ["Distractor One", ["An unrelated page about a city."]]
+    ],
+    "supporting_facts": [["Film Alpha", 0], ["Film Beta", 0]],
+    "evidences": [["Film Alpha", "publication date", "1990"], ["Film Beta", "publication date", "1995"]],
+    "entity_ids": "Q1_Q2",
+    "evidences_id": []
+  },
+  {
+    "_id": "q2-compositional",
+    "question": "Who directed the film that won the Fictional Prize?",
+    "answer": "Ana Silva",
+    "answer_id": "Q200",
+    "type": "compositional",
+    "context": [
+      ["Film Alpha", ["Film Alpha is a 1990 drama.", "It was directed by Ana Silva."]],
+      ["Fictional Prize", ["The Fictional Prize of 1991 was won by Film Alpha."]],
+      ["Distractor Two", ["Another unrelated page."]]
+    ],
+    "supporting_facts": [["Fictional Prize", 0], ["Film Alpha", 1]],
+    "evidences": [["Fictional Prize", "winner", "Film Alpha"], ["Film Alpha", "director", "Ana Silva"]],
+    "entity_ids": "Q3_Q4",
+    "evidences_id": []
+  }
+]

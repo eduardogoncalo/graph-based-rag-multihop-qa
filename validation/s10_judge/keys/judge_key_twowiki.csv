@@ -1,0 +1,61 @@
+question_id,cell,run,judge_label,judge_score,judge_rationale,pass_agreement,low_confidence,judge_model
+q_07088b2952e51ccc,cognee | controlado,cognee_v1free_k5,correct,1.0,asserts the gold answer 'yes' clearly.,True,False,gpt-4o-2024-08-06
+q_32dfc47e8b0a04b0,cognee | controlado,cognee_v1free_k5,incorrect,0.0,"does not assert the gold answer, mentions a Grammy Award instead",True,False,gpt-4o-2024-08-06
+q_3aa985ad1176a8a3,cognee | controlado,cognee_v1free_k5,correct,1.0,asserts the gold answer as the film with the director born later,True,False,gpt-4o-2024-08-06
+q_815e1cd325d1d6b1,cognee | controlado,cognee_v1free_k5,correct,1.0,asserts the gold as the place of burial,True,False,gpt-4o-2024-08-06
+q_93c3161e49a4c57b,cognee | controlado,cognee_v1free_k5,correct,1.0,asserts the gold answer directly,True,False,gpt-4o-2024-08-06
+q_9df848cc20ee1ede,cognee | controlado,cognee_v1free_k5,incorrect,0.0,"commits to the wrong final answer, asserting 'Bad Subject' instead of 'Making Babies'",True,False,gpt-4o-2024-08-06
+q_ba0442cc76b2d1ed,cognee | controlado,cognee_v1free_k5,correct,1.0,asserts the gold; only wrapped in markdown/sentence,True,False,gpt-4o-2024-08-06
+q_16e571e8d7ee3ce7,cognee | nativo,cognee_native,incorrect,0.0,"commits to a wrong final answer, naming Isabella of Urgell instead of Ermesinda of Bigorre",True,False,gpt-4o-2024-08-06
+q_18cdb3a7c1b53b80,cognee | nativo,cognee_native,refusal,0.0,"denies the premise, gives no answer",True,False,gpt-4o-2024-08-06
+q_56086814f3107118,cognee | nativo,cognee_native,correct,1.0,"asserts the gold as the answer, despite lack of information on Viktor Šiljeg",True,False,gpt-4o-2024-08-06
+q_63bc15e84ccb7c44,cognee | nativo,cognee_native,correct,1.0,asserts the gold as the film released first,True,False,gpt-4o-2024-08-06
+q_c60a0b2818aed01e,cognee | nativo,cognee_native,refusal,0.0,"denies the premise, gives no answer",True,False,gpt-4o-2024-08-06
+q_fa79ce3967922516,cognee | nativo,cognee_native,correct,1.0,asserts the gold as the film released first,True,False,gpt-4o-2024-08-06
+q_073017fa13070b06,hipporag2 | controlado,hipporag2_v1free,correct,1.0,asserts the gold answer clearly and correctly,True,False,gpt-4o-2024-08-06
+q_0760907824d36f74,hipporag2 | controlado,hipporag2_v1free,incorrect,0.0,commits to the wrong final answer,True,False,gpt-4o-2024-08-06
+q_15b56eeb4da8bba7,hipporag2 | controlado,hipporag2_v1free,correct,1.0,asserts the gold as the paternal grandfather,True,False,gpt-4o-2024-08-06
+q_1705377fff7616a9,hipporag2 | controlado,hipporag2_v1free,correct,1.0,asserts the gold as the more recently released film,True,False,gpt-4o-2024-08-06
+q_37caed314f574ce5,hipporag2 | controlado,hipporag2_v1free,incorrect,0.0,"commits to a wrong final answer, contradicting the gold 'yes'",True,False,gpt-4o-2024-08-06
+q_6f8f049329d7896a,hipporag2 | controlado,hipporag2_v1free,partial,0.5,"identifies the director but only gives the country, not the specific city of birth",True,False,gpt-4o-2024-08-06
+q_9a6f478478c156c5,hipporag2 | controlado,hipporag2_v1free,correct,1.0,asserts the gold; only wrapped in markdown/sentence,True,False,gpt-4o-2024-08-06
+q_26765914853c99d2,hipporag2 | nativo,hipporag2_native,correct,1.0,asserts the gold with additional location detail,True,False,gpt-4o-2024-08-06
+q_371c919305efd0c6,hipporag2 | nativo,hipporag2_native,correct,1.0,asserts the gold answer directly,True,False,gpt-4o-2024-08-06
+q_463720c3935f53ae,hipporag2 | nativo,hipporag2_native,correct,1.0,asserts the gold answer directly,True,False,gpt-4o-2024-08-06
+q_5670c81f567fa6cd,hipporag2 | nativo,hipporag2_native,refusal,0.0,"denies the premise, gives no answer",True,False,gpt-4o-2024-08-06
+q_6f8f049329d7896a,hipporag2 | nativo,hipporag2_native,refusal,0.0,the prediction declines to provide an answer,True,False,gpt-4o-2024-08-06
+q_b2364ef0cb5a6fc1,hipporag2 | nativo,hipporag2_native,correct,1.0,asserts the gold as the answer,True,False,gpt-4o-2024-08-06
+q_06d3080bafa743f8,lightrag | controlado,lightrag_v1free,incorrect,0.0,"commits to a wrong final answer, Moscow instead of Petersburg",True,False,gpt-4o-2024-08-06
+q_1a802e8b99737576,lightrag | controlado,lightrag_v1free,incorrect,0.0,"commits to a wrong final answer, Los Angeles instead of New York",True,False,gpt-4o-2024-08-06
+q_38e374c2d4a94257,lightrag | controlado,lightrag_v1free,correct,1.0,"asserts the gold as the film with the director born later, with additional explanation",True,False,gpt-4o-2024-08-06
+q_3d9fe45c3c0b6cb9,lightrag | controlado,lightrag_v1free,correct,1.0,"asserts the gold as the answer, with additional release date information",True,False,gpt-4o-2024-08-06
+q_45c6d2ade6e48c90,lightrag | controlado,lightrag_v1free,correct,1.0,asserts the gold as the answer,True,False,gpt-4o-2024-08-06
+q_a8048c71a4167bde,lightrag | controlado,lightrag_v1free,correct,1.0,asserts the gold answer 'Navy Nurse' as the film with the director born later,True,False,gpt-4o-2024-08-06
+q_c03f41be597e0036,lightrag | controlado,lightrag_v1free,correct,1.0,"asserts the gold answer, only with additional location detail",True,False,gpt-4o-2024-08-06
+q_389b4e65cc48e23a,lightrag | nativo,lightrag_native,correct,1.0,"asserts the gold answer, only with additional location detail",True,False,gpt-4o-2024-08-06
+q_6e430b7ab41ce4cf,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold answer as the one born first,True,False,gpt-4o-2024-08-06
+q_76d9a75cb4566424,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold 'Hollywood' as the place of death,True,False,gpt-4o-2024-08-06
+q_90a144d62f0f9745,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold as the film with the director born later,True,False,gpt-4o-2024-08-06
+q_9a6f3505eacd28f9,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold as the film that came out first,True,False,gpt-4o-2024-08-06
+q_a96cca1d0e379728,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold answer 'Tahaan' as the film with the younger director,True,False,gpt-4o-2024-08-06
+q_b39e578240a69840,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold answer clearly and correctly,True,False,gpt-4o-2024-08-06
+q_18cdb3a7c1b53b80,ms_graphrag | controlado,ms_graphrag_v1free,incorrect,0.0,"commits to a wrong final answer, giving a different person and date",True,False,gpt-4o-2024-08-06
+q_216bc626d97e18e1,ms_graphrag | controlado,ms_graphrag_v1free,correct,1.0,asserts the gold; only wrapped in markdown/sentence,True,False,gpt-4o-2024-08-06
+q_90a144d62f0f9745,ms_graphrag | controlado,ms_graphrag_v1free,correct,1.0,asserts the gold; only wrapped in markdown/sentence,True,False,gpt-4o-2024-08-06
+q_ad94054e7738b812,ms_graphrag | controlado,ms_graphrag_v1free,correct,1.0,asserts the gold answer 'Munich' as the place of death,True,False,gpt-4o-2024-08-06
+q_bf7fef0948856848,ms_graphrag | controlado,ms_graphrag_v1free,correct,1.0,asserts the gold answer directly,True,False,gpt-4o-2024-08-06
+q_bffdf551872aafdc,ms_graphrag | controlado,ms_graphrag_v1free,correct,1.0,asserts the gold answer as the stepmother of Sara Ali Khan,True,False,gpt-4o-2024-08-06
+q_e7e0829be28db665,ms_graphrag | controlado,ms_graphrag_v1free,correct,1.0,asserts the gold answer 'Delft' as the place of death,True,False,gpt-4o-2024-08-06
+q_02573c1aa5b6c943,ms_graphrag | nativo,ms_graphrag_native,correct,1.0,asserts the gold answer UCLA as the place where Denis Sanders studied.,True,False,gpt-4o-2024-08-06
+q_289495ab7ac49eb5,ms_graphrag | nativo,ms_graphrag_native,correct,1.0,asserts the gold answer 'Yerevan' as the place of death,True,False,gpt-4o-2024-08-06
+q_463720c3935f53ae,ms_graphrag | nativo,ms_graphrag_native,correct,1.0,asserts the gold as the film with the earlier-born director,True,False,gpt-4o-2024-08-06
+q_c502b9f8a3fac17d,ms_graphrag | nativo,ms_graphrag_native,correct,1.0,"asserts the gold answer by stating D.W. Winnicott is from England, which is part of the UK",True,False,gpt-4o-2024-08-06
+q_d0cf981463be0640,ms_graphrag | nativo,ms_graphrag_native,refusal,0.0,declines to provide an answer due to lack of information,True,False,gpt-4o-2024-08-06
+q_d1440d0ee5db6b1b,ms_graphrag | nativo,ms_graphrag_native,correct,1.0,asserts the gold answer as the older person,True,False,gpt-4o-2024-08-06
+q_e26ff6a49958d237,ms_graphrag | nativo,ms_graphrag_native,correct,1.0,"asserts the gold answer by concluding Lino Brocka died first, matching the film 'Manila In The Claws Of Light'",True,False,gpt-4o-2024-08-06
+q_18149193e4ad58c7,vector_denso | controlado,vector_v1free,incorrect,0.0,"commits to a wrong final answer, stating Fabio De Luigi instead of Marco De Luigi",True,False,gpt-4o-2024-08-06
+q_42dee62ce707a964,vector_denso | controlado,vector_v1free,incorrect,0.0,"commits to a wrong final answer, naming Lugaid Íardonn instead of Énna Derg",True,False,gpt-4o-2024-08-06
+q_57bc85df93b5f0b9,vector_denso | controlado,vector_v1free,incorrect,0.0,commits to a wrong birth date for the director,True,False,gpt-4o-2024-08-06
+q_5befe140ec042eb9,vector_denso | controlado,vector_v1free,correct,1.0,asserts the gold answer directly,True,False,gpt-4o-2024-08-06
+q_9e3bccba73b7593a,vector_denso | controlado,vector_v1free,correct,1.0,asserts the gold as the film released first,True,False,gpt-4o-2024-08-06
+q_dac43f0bd1c58ae0,vector_denso | controlado,vector_v1free,correct,1.0,asserts the gold answer 'yes' clearly.,True,False,gpt-4o-2024-08-06

@@ -1,0 +1,141 @@
+{
+ "gerado_em": "2026-07-26",
+ "protocolos": {
+  "principal": "120 itens (60/dataset), prevalência natural, semente 42, verificação-e-correcção com rótulo do judge pré-preenchido (ancoragem declarada)",
+  "suplemento": "30 itens (15/dataset), semente 4242, rotulagem CEGA (coluna vazia), sobreamostrando refusal do braço nativo, regime de evidência e discordância entre passes"
+ },
+ "resultados": {
+  "principal_musique": {
+   "n": 60,
+   "acordo": 1.0,
+   "kappa_5": 1.0,
+   "acordo_binario": 1.0,
+   "kappa_binario": 1.0,
+   "dist_humano": {
+    "incorrect": 26,
+    "refusal": 3,
+    "correct": 28,
+    "partial": 3
+   },
+   "dist_judge": {
+    "incorrect": 26,
+    "refusal": 3,
+    "correct": 28,
+    "partial": 3
+   },
+   "divergencias": []
+  },
+  "principal_twowiki": {
+   "n": 60,
+   "acordo": 1.0,
+   "kappa_5": 1.0,
+   "acordo_binario": 1.0,
+   "kappa_binario": 1.0,
+   "dist_humano": {
+    "correct": 43,
+    "incorrect": 11,
+    "refusal": 5,
+    "partial": 1
+   },
+   "dist_judge": {
+    "correct": 43,
+    "incorrect": 11,
+    "refusal": 5,
+    "partial": 1
+   },
+   "divergencias": []
+  },
+  "principal_combinado": {
+   "n": 120,
+   "acordo": 1.0,
+   "kappa_5": 1.0,
+   "acordo_binario": 1.0,
+   "kappa_binario": 1.0
+  },
+  "suplemento_musique": {
+   "n": 15,
+   "acordo": 0.9333,
+   "kappa_5": 0.877,
+   "acordo_binario": 1.0,
+   "kappa_binario": 1.0,
+   "dist_humano": {
+    "incorrect": 5,
+    "refusal": 9,
+    "partial": 1
+   },
+   "dist_judge": {
+    "incorrect": 6,
+    "refusal": 8,
+    "partial": 1
+   },
+   "divergencias": [
+    {
+     "n": 8,
+     "cell": "cognee|nativo",
+     "judge": "incorrect",
+     "humano": "refusal"
+    }
+   ],
+   "por_estrato": {
+    "E0|controlado": {
+     "acordo": 5,
+     "n": 5
+    },
+    "refusal|nativo": {
+     "acordo": 8,
+     "n": 8
+    },
+    "discordancia_passes": {
+     "acordo": 1,
+     "n": 2
+    }
+   }
+  },
+  "suplemento_twowiki": {
+   "n": 15,
+   "acordo": 0.9333,
+   "kappa_5": 0.8855,
+   "acordo_binario": 1.0,
+   "kappa_binario": 1.0,
+   "dist_humano": {
+    "refusal": 9,
+    "partial": 2,
+    "correct": 3,
+    "incorrect": 1
+   },
+   "dist_judge": {
+    "refusal": 9,
+    "incorrect": 2,
+    "correct": 3,
+    "partial": 1
+   },
+   "divergencias": [
+    {
+     "n": 6,
+     "cell": "ms_graphrag|nativo",
+     "judge": "incorrect",
+     "humano": "partial"
+    }
+   ],
+   "por_estrato": {
+    "refusal|nativo": {
+     "acordo": 8,
+     "n": 8
+    },
+    "E1|controlado": {
+     "acordo": 5,
+     "n": 5
+    },
+    "discordancia_passes": {
+     "acordo": 1,
+     "n": 2
+    }
+   }
+  },
+  "suplemento_combinado": {
+   "n": 30,
+   "acordo": 0.9333,
+   "nota": "amostra desbalanceada por desenho — reportar acordo por estrato, NAO kappa"
+  }
+ }
+}

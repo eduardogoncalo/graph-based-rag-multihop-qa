@@ -1,0 +1,39 @@
+# O experimento do modo `smoke` — o que o `reproduce.sh` corre por omissão, e o
+# que o vídeo mostra.
+#
+# Substituiu o `cuad_memory_comparison_small.yaml`, apagado a 2026-08-09 com o
+# resto da linhagem CUAD. Era o único experimento declarado no pacote, e sem
+# substituto o `load_experiment_config` ficava sem nada para carregar.
+#
+# O QUE ESTE MODO PROVA, E O QUE NÃO PROVA. Prova a cadeia inteira — ingestão,
+# indexação, leitura, juiz, relatório — sobre uma amostra pequena, em minutos e
+# por cêntimos. **Não reproduz as conclusões da dissertação**: são 20 perguntas
+# contra as 1000 de cada dataset, e a indexação e o julgamento são feitos por
+# modelos de linguagem, que não são deterministas.
+
+# O identificador deriva do dataset, e passou a ser assim a 2026-08-10. Era
+# `smoke_v1`, que não dizia sobre que dataset corria — e com o 2Wiki a entrar no
+# pacote, dois datasets debaixo do mesmo identificador misturavam-se no
+# Postgres. O `reproduce.sh` deriva o mesmo valor, para as duas fontes não
+# poderem discordar.
+experiment_id: musique_smoke_20_v1
+dataset_id: musique_smoke_20
+dataset_version: v1
+
+agent_modes:
+  - single_agent
+
+# Os dois métodos do modo `smoke`, e a razão de serem estes dois: correm com o
+# ambiente principal e mais nada. O `vector_rag` prova o caminho denso e o
+# Postgres com pgvector; o `lightrag_neo4j` prova o caminho de grafo, o Option C
+# e o container Neo4j por (método, dataset).
+#
+# O modo `full` acrescenta `ms_graphrag`, `cognee` e `hipporag2`, que exigem os
+# ambientes isolados — ver requirements/ e scripts/bootstrap_envs.sh.
+#
+# É o `ms_graphrag` e NÃO o `ms_graphrag_neo4j`: essa variante não tem cliente
+# vivo, e o adaptador levanta «live execution is not configured». Corrigido a
+# 2026-08-10; a linha dizia o método errado.
+methods:
+  - vector_rag
+  - lightrag_neo4j

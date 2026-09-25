@@ -1,0 +1,87 @@
+# Benchmark infrastructure.
+#
+# POSTGRES PORTS. The 154xx band, chosen so it cannot collide with the machine
+# where the experimental phase ran: there, 5432 belongs to the benchmark
+# Postgres and 5433 to Cognee. Here we use 15432 and 15433.
+#
+# TWO SOURCES OF TRUTH FOR NEO4J, AND BOTH ARE LOAD-BEARING.
+#
+# This carried an "unresolved note" until 2026-08-09, on the suspicion that the
+# services below were a leftover from before Option C. They are not. The two
+# routes serve different entry points of the package, and deleting either one
+# breaks half of it:
+#
+#   * THE FIXED SERVICES IN THIS FILE — `neo4j_lightrag` and `neo4j_graphrag` —
+#     are what the **CLI** uses. `benchmark index --method lightrag_neo4j`
+#     resolves the connection through the LIGHTRAG_NEO4J_* / GRAPHRAG_NEO4J_*
+#     variables, and those point at these ports. This is `reproduce.sh`'s path.
+#
+#   * OPTION C — one container per (method, dataset) pair, created by
+#     src/benchmark/infra/neo4j_containers.py with ports from the registry in
+#     configs/infra/neo4j_ports.yaml — is what the **scripts** use:
+#     twowiki_lightrag_index.py, run_cognee_native.py, and run_single.py for
+#     Cognee. This is the experimental phase's path.
+#
+# The collision that used to exist is gone: the ports were 7474/7687 and
+# 7475/7688, the same ones the registry reserves for a host-native Neo4j. They
+# have been in the 18xxx band since commit 00e4c77, with
+# tests/test_ms_graphrag_neo4j_infra.py updated alongside.
+#
+# If you change anything here: these ports are pinned in that test, one by one,
+# and Option C's live in the registry. Changing one without the other breaks one
+# of the two routes.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: benchmark
+      POSTGRES_USER: benchmark
+      POSTGRES_PASSWORD: benchmark
+    ports:
+      - "15432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Cognee's relational store, separate from the benchmark's.
+  # See configs/methods/cognee.yaml (relational_store, port 5433 in the original
+  # environment).
+  postgres_cognee:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: cognee
+      POSTGRES_USER: benchmark
+      POSTGRES_PASSWORD: benchmark
+    ports:
+      - "15433:5432"
+    volumes:
+      - postgres_cognee_data:/var/lib/postgresql/data
+
+  neo4j_graphrag:
+    image: docker.io/library/neo4j:5
+    environment:
+      NEO4J_AUTH: neo4j/benchmark_graphrag
+      NEO4J_PLUGINS: '["apoc","graph-data-science"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*,gds.*
+      NEO4J_dbms_security_procedures_allowlist: apoc.*,gds.*
+    ports:
+      - "18474:7474"
+      - "18687:7687"
+    volumes:
+      - neo4j_graphrag_data:/data
+
+  neo4j_lightrag:
+    image: docker.io/library/neo4j:5
+    environment:
+      NEO4J_AUTH: neo4j/benchmark_lightrag
+    ports:
+      - "18475:7474"
+      - "18688:7687"
+    volumes:
+      - neo4j_lightrag_data:/data
+
+volumes:
+  postgres_data:
+  postgres_cognee_data:
+  neo4j_graphrag_data:
+  neo4j_lightrag_data:

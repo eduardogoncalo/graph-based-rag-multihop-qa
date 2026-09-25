@@ -1,0 +1,41 @@
+{
+ "seed": 4242,
+ "per_dataset": 15,
+ "protocolo": "rotulagem CEGA (human_evaluation vazia) — difere dos 120 originais, que foram verificacao-e-correcao",
+ "quotas": {
+  "refusal (braco nativo)": 8,
+  "regime de evidencia": 5,
+  "discordancia entre passes": 2
+ },
+ "nota_regime": "MuSiQue usa E0 (recall@5=0); 2Wiki usa E1 (all_gold@5=0) porque recall@5=0 e quase inexistente no 2Wiki",
+ "exclui": "question_ids ja presentes nos 120 originais",
+ "datasets": {
+  "musique": {
+   "n": 15,
+   "estratos": {
+    "E0|controlado": 5,
+    "refusal|nativo": 8,
+    "discordancia_passes": 2
+   },
+   "rotulos_do_judge": {
+    "incorrect": 6,
+    "refusal": 8,
+    "partial": 1
+   }
+  },
+  "twowiki": {
+   "n": 15,
+   "estratos": {
+    "refusal|nativo": 8,
+    "E1|controlado": 5,
+    "discordancia_passes": 2
+   },
+   "rotulos_do_judge": {
+    "refusal": 9,
+    "incorrect": 2,
+    "correct": 3,
+    "partial": 1
+   }
+  }
+ }
+}

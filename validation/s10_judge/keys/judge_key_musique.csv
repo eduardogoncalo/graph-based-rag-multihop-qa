@@ -1,0 +1,61 @@
+question_id,cell,run,judge_label,judge_score,judge_rationale,pass_agreement,low_confidence,judge_model
+q_07b62387b86de194,cognee | controlado,cognee_v1free_k5,incorrect,0.0,"commits to a wrong final answer, DEU instead of GDR",True,False,gpt-4o-2024-08-06
+q_3550b14682b0c84d,cognee | controlado,cognee_v1free_k5,refusal,0.0,"denies the premise, gives no answer",False,True,gpt-4o-2024-08-06
+q_3c35c123c4d4e226,cognee | controlado,cognee_v1free_k5,correct,1.0,asserts the gold answer directly,True,False,gpt-4o-2024-08-06
+q_83e2c523552abeda,cognee | controlado,cognee_v1free_k5,incorrect,0.0,"commits to a wrong final answer, 'second' instead of 'third-largest'",True,False,gpt-4o-2024-08-06
+q_91d1867561c063f3,cognee | controlado,cognee_v1free_k5,incorrect,0.0,"commits to a wrong final answer, Đà Nẵng instead of Danzhou",True,False,gpt-4o-2024-08-06
+q_9d3f21c83edc2948,cognee | controlado,cognee_v1free_k5,incorrect,0.0,"commits to a wrong final answer, 1815 instead of 1738",True,False,gpt-4o-2024-08-06
+q_1866712b9732572c,cognee | nativo,cognee_native,correct,1.0,asserts the gold answer directly,True,False,gpt-4o-2024-08-06
+q_19a704faeee2a137,cognee | nativo,cognee_native,correct,1.0,asserts the gold answer directly,True,False,gpt-4o-2024-08-06
+q_38f923437ce9d729,cognee | nativo,cognee_native,correct,1.0,asserts the gold answer as the Chief Judge in the specified location,True,False,gpt-4o-2024-08-06
+q_5b2d58749d88398a,cognee | nativo,cognee_native,refusal,0.0,"declines to provide an answer, stating lack of information",True,False,gpt-4o-2024-08-06
+q_c659f73e09e3cd00,cognee | nativo,cognee_native,correct,1.0,asserts the gold answer directly,True,False,gpt-4o-2024-08-06
+q_fb0df313c451cad8,cognee | nativo,cognee_native,incorrect,0.0,"commits to a wrong final answer, Vatican City instead of Alfredo Stroessner's Paraguay",True,False,gpt-4o-2024-08-06
+q_098c4ff6b3f51997,hipporag2 | controlado,hipporag2_v1free,incorrect,0.0,"commits to a wrong final answer, 1220 instead of 1216",True,False,gpt-4o-2024-08-06
+q_09cb1feb5e5bce9a,hipporag2 | controlado,hipporag2_v1free,correct,1.0,asserts the gold year as the merger date,True,False,gpt-4o-2024-08-06
+q_17bffd2922e4d345,hipporag2 | controlado,hipporag2_v1free,correct,1.0,asserts the gold as the president of the organization where Julio Maglione is located,True,False,gpt-4o-2024-08-06
+q_18817f9c3869b235,hipporag2 | controlado,hipporag2_v1free,correct,1.0,asserts the gold as the primary figure associated with the introduction of musical notation in the 14th century,True,False,gpt-4o-2024-08-06
+q_38ff4b31d41259be,hipporag2 | controlado,hipporag2_v1free,correct,1.0,"asserts the gold date, only with additional context",True,False,gpt-4o-2024-08-06
+q_6e63f6706f83386f,hipporag2 | controlado,hipporag2_v1free,partial,0.5,"mentions the treble but does not clearly assert it as the answer, mixes Spain national team and FC Barcelona achievements",True,False,gpt-4o-2024-08-06
+q_99cf7f91f0c95005,hipporag2 | controlado,hipporag2_v1free,incorrect,0.0,The prediction does not assert the gold answer about the dynasty regrouping and defeating the Portuguese.,True,False,gpt-4o-2024-08-06
+q_2ada03cbf1b2c154,hipporag2 | nativo,hipporag2_native,refusal,0.0,"denies the premise, gives no answer",True,False,gpt-4o-2024-08-06
+q_2bd1074757f2c322,hipporag2 | nativo,hipporag2_native,incorrect,0.0,"commits to a wrong final answer, ABC is not the label bought by the company.",True,False,gpt-4o-2024-08-06
+q_482d1c741c4e6f4f,hipporag2 | nativo,hipporag2_native,incorrect,0.0,"commits to a wrong final answer, naming a park instead of the correct administrative entity",True,False,gpt-4o-2024-08-06
+q_5ba477d180dbcd92,hipporag2 | nativo,hipporag2_native,correct,1.0,"asserts the gold answer, only omitting 'season' which is implied",True,False,gpt-4o-2024-08-06
+q_6e63f6706f83386f,hipporag2 | nativo,hipporag2_native,incorrect,0.0,"answered with a specific tournament win, not the series of wins (continental treble)",True,False,gpt-4o-2024-08-06
+q_b67cbefb0a956c1d,hipporag2 | nativo,hipporag2_native,correct,1.0,asserts the gold answer directly,True,False,gpt-4o-2024-08-06
+q_06d0759e1981197f,lightrag | controlado,lightrag_v1free,incorrect,0.0,commits to a wrong final answer of 'twenty-two days' instead of 'about 400 years',True,False,gpt-4o-2024-08-06
+q_1c6ef1cffb58a827,lightrag | controlado,lightrag_v1free,correct,1.0,asserts the gold answer directly,True,False,gpt-4o-2024-08-06
+q_39d8b985bac8678c,lightrag | controlado,lightrag_v1free,correct,1.0,asserts the gold answer '15th century' by stating 'around 1400' which is within the 15th century,True,False,gpt-4o-2024-08-06
+q_3e68a1b7770dc528,lightrag | controlado,lightrag_v1free,correct,1.0,asserts the gold answer as the reason for Roncalli's departure,True,False,gpt-4o-2024-08-06
+q_4753fbcd48dc59dd,lightrag | controlado,lightrag_v1free,incorrect,0.0,"commits to a wrong final answer, River Thames instead of River Great Ouse",True,False,gpt-4o-2024-08-06
+q_a499e5e8aa28f0aa,lightrag | controlado,lightrag_v1free,incorrect,0.0,"commits to a wrong final answer, mentioning the Rhine River instead of the English Channel.",True,False,gpt-4o-2024-08-06
+q_c19c147f4a62f435,lightrag | controlado,lightrag_v1free,incorrect,0.0,"commits to a wrong final answer, mentioning University of North Carolina and Clemson University instead of University of South Carolina.",True,False,gpt-4o-2024-08-06
+q_3942dcdddbe5d32a,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold answer as the child of the navigator,True,False,gpt-4o-2024-08-06
+q_6c8e78735fb7f9ac,lightrag | nativo,lightrag_native,incorrect,0.0,"asserts Classical Latin, not Medieval Latin as the language of the last name Sylvester",True,False,gpt-4o-2024-08-06
+q_762f7a054d602500,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold answer 'only about half' clearly.,True,False,gpt-4o-2024-08-06
+q_8d9ec65b2e2b22d3,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold answer '1970s' as the time New Orleans elected its first black mayor.,True,False,gpt-4o-2024-08-06
+q_a85d84aeafb8e3e6,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold answer as one of the writers of the show,True,False,gpt-4o-2024-08-06
+q_b873d4351785f8f1,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold answer '15th century' as the construction period of the Palau de la Generalitat.,True,False,gpt-4o-2024-08-06
+q_bb80f020b76687a6,lightrag | nativo,lightrag_native,correct,1.0,asserts the gold answer 'five' as the limit on games per developer per year.,True,False,gpt-4o-2024-08-06
+q_19a704faeee2a137,ms_graphrag | controlado,ms_graphrag_v1free,correct,1.0,asserts the gold century as the answer,True,False,gpt-4o-2024-08-06
+q_24cc4f426b4052c2,ms_graphrag | controlado,ms_graphrag_v1free,correct,1.0,asserts the gold as the original voice actor,True,False,gpt-4o-2024-08-06
+q_8d9ec65b2e2b22d3,ms_graphrag | controlado,ms_graphrag_v1free,incorrect,0.0,"commits to a wrong final answer, 1994 instead of 1970s",True,False,gpt-4o-2024-08-06
+q_b1dff138d35745a4,ms_graphrag | controlado,ms_graphrag_v1free,incorrect,0.0,"commits to a wrong final answer, giving a different date than the gold",True,False,gpt-4o-2024-08-06
+q_c0560c6b2953a124,ms_graphrag | controlado,ms_graphrag_v1free,incorrect,0.0,"commits to a wrong final answer, Eye Reckon Records, instead of Warner Music Group",True,False,gpt-4o-2024-08-06
+q_c15ab8e00748efcc,ms_graphrag | controlado,ms_graphrag_v1free,incorrect,0.0,"commits to a wrong final answer, Amanda Braden instead of Kim Braden",True,False,gpt-4o-2024-08-06
+q_e6779c7e5298df50,ms_graphrag | controlado,ms_graphrag_v1free,incorrect,0.0,"commits to a wrong final answer, 'Sony Music' instead of 'Warner Music Group'",True,False,gpt-4o-2024-08-06
+q_019c49d17050ede8,ms_graphrag | nativo,ms_graphrag_native,incorrect,0.0,The prediction does not assert Mario Andretti as the winner of the Indy Car Race.,True,False,gpt-4o-2024-08-06
+q_482d1c741c4e6f4f,ms_graphrag | nativo,ms_graphrag_native,partial,0.5,mentions Gmina Gaworzyce as part of Polkowice County but does not assert it as the specific border-sharing entity with Radwanice.,True,False,gpt-4o-2024-08-06
+q_99b73b659b0c1500,ms_graphrag | nativo,ms_graphrag_native,correct,1.0,asserts the gold answer as the president of the relevant country,True,False,gpt-4o-2024-08-06
+q_c58581e04a1413c8,ms_graphrag | nativo,ms_graphrag_native,correct,1.0,"The prediction asserts the gold answer, mentioning both the Iranic Sarmatians and the Germanic Goths as groups the Slavs interacted with.",True,False,gpt-4o-2024-08-06
+q_d02ac06449f85f27,ms_graphrag | nativo,ms_graphrag_native,partial,0.5,"mentions George Benson as a featured artist but also includes Dave Koz, hedging between candidates",True,False,gpt-4o-2024-08-06
+q_d0d2e0060c2377f8,ms_graphrag | nativo,ms_graphrag_native,incorrect,0.0,The prediction does not assert the gold answer 'the Politburo' as the place of declaration.,True,False,gpt-4o-2024-08-06
+q_df12bdab47d79e33,ms_graphrag | nativo,ms_graphrag_native,correct,1.0,asserts the gold answer as the child of John Cabot.,True,False,gpt-4o-2024-08-06
+q_193b9062e331fa23,vector_denso | controlado,vector_v1free,incorrect,0.0,"commits to a wrong final answer, 49.3% instead of 48.8%",True,False,gpt-4o-2024-08-06
+q_45cfb0550815cccd,vector_denso | controlado,vector_v1free,correct,1.0,asserts the gold as the spouse of the creator,True,False,gpt-4o-2024-08-06
+q_5bfd5cda89b23d20,vector_denso | controlado,vector_v1free,incorrect,0.0,"commits to a wrong final answer, Atlanta instead of Toronto",True,False,gpt-4o-2024-08-06
+q_5f1925feeea67c09,vector_denso | controlado,vector_v1free,correct,1.0,asserts the gold answer as the end of the Governorship,True,False,gpt-4o-2024-08-06
+q_63b9388a95cb0fd8,vector_denso | controlado,vector_v1free,incorrect,0.0,"commits to the wrong final answer, Salma Hayek instead of Maria Bello",True,False,gpt-4o-2024-08-06
+q_9de217de5257df7f,vector_denso | controlado,vector_v1free,correct,1.0,asserts the gold answer as part of the explanation,True,False,gpt-4o-2024-08-06
+q_d9d897ade98813f8,vector_denso | controlado,vector_v1free,incorrect,0.0,"commits to a wrong final answer, focusing on post-1954 control rather than January 2015",True,False,gpt-4o-2024-08-06

@@ -1,0 +1,17 @@
+method_id: lightrag
+enabled: true
+description: LightRAG adapter using the official LightRAG Python library at runtime.
+workspace:
+  relative_path: artifacts/{dataset_id}_{dataset_version}/lightrag
+ingestion:
+  strategy: python_library
+query:
+  default_mode: mix
+  supported_modes:
+    - mix
+    - local
+    - global
+    - hybrid
+    - naive
+    - bypass
+  top_k: 5

@@ -1,0 +1,14 @@
+method_id: ms_graphrag
+enabled: true
+description: Microsoft GraphRAG adapter using the official GraphRAG CLI.
+workspace:
+  relative_path: artifacts/{dataset_slug}/ms_graphrag/workspace  # slug = slugify_dataset_version (pontos->underscores)
+index:
+  method: standard
+query:
+  default_method: local
+  supported_methods:
+    - local
+    - global
+    - drift
+    - basic

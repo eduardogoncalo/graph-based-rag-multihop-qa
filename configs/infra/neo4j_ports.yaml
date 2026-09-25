@@ -1,0 +1,137 @@
+# Option C — Neo4j host-port registry (source of truth).
+#
+# Maps each "{method_short}_{slug}" to its published host ports. Containers run
+# Neo4j Community (one default `neo4j` db each); isolation is the container +
+# volume boundary, so multiple datasets need distinct host ports.
+#
+# =============================================================================
+# A REGRA, EM UMA LINHA: as `assignments` são todas da banda 18xxx, e a banda
+# 17xxx vive inteira em `reserved`, onde nunca é atribuída a nada.
+# =============================================================================
+#
+# Nem sempre foi assim, e a história explica o ficheiro. Até 2026-08-10 as
+# `assignments` dos datasets `*_eval1k` apontavam para a banda 17xxx — a do
+# AMBIENTE ORIGINAL, que também está em `reserved`. O efeito era que **nenhum
+# dataset real tinha uma atribuição utilizável**: o preflight recusava-as todas,
+# e o Cognee não arrancava sobre MuSiQue nem sobre 2Wiki. Ficaram registadas
+# como «um mapa do que não se toca», mas um mapa não precisa de ocupar a chave
+# do dataset — e ocupá-la impedia a atribuição a sério de existir, porque o
+# registo é indexado por `{método}_{slug}` e a chave é única.
+#
+# A protecção não vinha da atribuição, e é por isso que movê-la não a
+# enfraquece. Vem de dois sítios, ambos intactos:
+#
+#   1. `reserved` abaixo, que o `preflight_ports` consulta antes de subir
+#      qualquer container — 17474-17478 e 17687-17691 continuam lá;
+#   2. `benchmark.infra.guard`, que recusa a banda 17xxx em qualquer URI, venha
+#      ela do registo, do `.env` ou de um argumento escrito à mão.
+#
+# Os testes do guard não mudaram com esta alteração. É essa a prova.
+
+band:
+  # A banda histórica do ambiente original. Fica documentada porque os nomes de
+  # container e as URI que aparecem nos registos da fase experimental são desta
+  # banda. NÃO é atribuível: ver `reserved`.
+  http_base: 17474
+  bolt_base: 17687
+
+# A banda deste repositório. 18474/18687 e 18475/18688 pertencem aos serviços
+# neo4j_graphrag e neo4j_lightrag do docker-compose.yml, por isso as
+# atribuições do Option C começam acima disso.
+smoke_band:
+  http_base: 18476
+  bolt_base: 18690
+
+# Ports known to belong to other services — never assign these.
+reserved:
+  - 5432   # benchmark Postgres (pgvector)
+  - 7474   # host-native Neo4j HTTP
+  - 7687   # host-native Neo4j Bolt
+  # --- Ambiente original da fase experimental. NÃO TOCAR. ---
+  # Estas portas pertencem aos containers que guardam os índices que sustentam
+  # a dissertação. Reservadas aqui para o preflight as recusar por construção,
+  # em vez de depender de alguém se lembrar.
+  - 5433   # Postgres do Cognee, ambiente original
+  - 17474
+  - 17475
+  - 17476
+  - 17477
+  - 17478
+  - 17687
+  - 17688
+  - 17689
+  - 17690
+  - 17691
+
+# =============================================================================
+# ATRIBUIÇÕES — banda 18xxx, todas utilizáveis
+#
+# Ocupação da banda, para quem acrescentar um dataset novo:
+#   HTTP  18474-18475  docker-compose.yml (neo4j_graphrag, neo4j_lightrag)
+#         18476-18487  Option C, abaixo
+#         18488+       livre
+#   BOLT  18687-18688  docker-compose.yml
+#         18690-18701  Option C, abaixo
+#         18702+       livre
+#
+# Um dataset novo leva três entradas (graphrag, lightrag, cognee), mesmo que só
+# venha a usar uma: o custo de as declarar é nulo e o de descobrir a que falta é
+# uma indexação perdida.
+# =============================================================================
+assignments:
+  # --- MuSiQue, amostra de smoke (20 perguntas) ---
+  graphrag_musique_smoke_20_v1:
+    http: 18476
+    bolt: 18690
+  lightrag_musique_smoke_20_v1:
+    http: 18477
+    bolt: 18691
+  cognee_musique_smoke_20_v1:
+    http: 18478
+    bolt: 18692
+
+  # --- MuSiQue, o protocolo completo (1000 perguntas, 11515 documentos) ---
+  #
+  # Estas chaves estavam na banda 17xxx até 2026-08-10 e por isso eram
+  # inutilizáveis. Ver o cabeçalho.
+  graphrag_musique_ans_v1_0_eval1k:
+    http: 18479
+    bolt: 18693
+  lightrag_musique_ans_v1_0_eval1k:
+    http: 18480
+    bolt: 18694
+  cognee_musique_ans_v1_0_eval1k:
+    http: 18481
+    bolt: 18695
+
+  # --- 2Wiki, o protocolo completo (1000 perguntas, 6119 documentos) ---
+  #
+  # O `graphrag_` não existia de todo antes de 2026-08-10 — o registo tinha só
+  # o lightrag e o cognee para este dataset.
+  graphrag_twowiki_ans_v1_0_eval1k:
+    http: 18482
+    bolt: 18696
+  lightrag_twowiki_ans_v1_0_eval1k:
+    http: 18483
+    bolt: 18697
+  cognee_twowiki_ans_v1_0_eval1k:
+    http: 18484
+    bolt: 18698
+
+  # --- 2Wiki, amostra de smoke (20 perguntas) ---
+  #
+  # Novo a 2026-08-10. O 2Wiki é metade do protocolo e nunca tinha sido
+  # exercitado neste repositório: não havia amostra pequena com que o fazer.
+  graphrag_twowiki_smoke_20_v1:
+    http: 18485
+    bolt: 18699
+  lightrag_twowiki_smoke_20_v1:
+    http: 18486
+    bolt: 18700
+  cognee_twowiki_smoke_20_v1:
+    http: 18487
+    bolt: 18701
+
+# O Cognee precisa também de um Postgres próprio — serviço `postgres_cognee` do
+# docker-compose.yml, porta 15433. Não é gerido por este registo, mas a porta
+# 5433 (a do ambiente original) está em `reserved` acima, pelo mesmo motivo.

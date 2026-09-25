@@ -1,0 +1,50 @@
+# ---- Secrets. Never version these. ----
+#
+# The pattern is deliberately wide. `.env` and `.env.local` on their own let
+# through everything else that accumulates around a secrets file — `.env.bak`,
+# `.env.old`, `.env.2026-08-09`, `.env.producao`. One of them is enough for the
+# keys to escape, and you only find out after the commit exists.
+#
+# So the whole family is ignored, with one explicit exception for the file that
+# does travel.
+.env
+.env.*
+*.env
+!.env.example
+
+# ---- Preparation material: environment snapshots and references ----
+# Stays on disk; does not travel in the package.
+_prep/
+
+# ---- Virtual environments ----
+.venv/
+.venvs/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# ---- Datasets: downloaded by scripts/fetch_datasets.py ----
+data/
+
+# ---- Run artefacts: produced by whoever runs the pipeline ----
+artifacts/
+artifacts_variant/
+
+# ---- Logs ----
+*.log
+logs/
+
+# ---- The delivery zip: a build artefact ----
+# Produced by scripts/empacotar_entrega.sh from a commit. Versioning it would
+# mean keeping a copy of the repository inside the repository.
+graph_based_rag_entrega*.zip
+
+# ---- The experiment results ----
+# `results/` is the data that ships with the delivery, not code and not output
+# from this pipeline. It stays out of git — the packager adds it to the zip when
+# it exists — so megabytes of CSV never enter the history.
+results/

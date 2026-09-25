@@ -1,0 +1,62 @@
+method_id: cognee
+framework_id: cognee
+description: Cognee method using isolated Neo4j graph store and scoped Postgres relational store.
+artifact_subdir: cognee
+graph_store:
+  provider: neo4j
+  service: neo4j_cognee
+  browser_url: http://localhost:7476
+  url: bolt://localhost:18689
+  username: neo4j
+  password_env: COGNEE_NEO4J_PASSWORD
+  database: neo4j
+  volume: artifacts/cognee/neo4j/
+  cognee_env:
+    provider: GRAPH_DATABASE_PROVIDER
+    url: GRAPH_DATABASE_URL
+    username: GRAPH_DATABASE_USERNAME
+    password: GRAPH_DATABASE_PASSWORD
+    database: GRAPH_DATABASE_NAME
+relational_store:
+  provider: postgres
+  host: 127.0.0.1
+  port: 15433
+  username: benchmark
+  password_env: COGNEE_POSTGRES_PASSWORD
+  database: cognee_benchmark
+  schema: cognee
+  use_existing_container: true
+  isolation_priority:
+    - database
+    - schema
+    - table_prefix
+  cognee_env:
+    provider: DB_PROVIDER
+    host: DB_HOST
+    port: DB_PORT
+    username: DB_USERNAME
+    password: DB_PASSWORD
+    database: DB_NAME
+    schema: DB_SCHEMA
+vector_store:
+  provider: pgvector
+  host: 127.0.0.1
+  port: 15433
+  username: benchmark
+  password_env: COGNEE_POSTGRES_PASSWORD
+  database: cognee_benchmark
+  schema: cognee
+  extension: vector
+  use_existing_container: true
+  cognee_env:
+    provider: VECTOR_DB_PROVIDER
+    host: VECTOR_DB_HOST
+    port: VECTOR_DB_PORT
+    username: VECTOR_DB_USERNAME
+    password: VECTOR_DB_PASSWORD
+    database: VECTOR_DB_NAME
+    schema: VECTOR_DB_SCHEMA
+storage:
+  system_root: artifacts/cognee/system/
+  vector_root: artifacts/cognee/vector/
+  local_db_root: artifacts/cognee/db/
