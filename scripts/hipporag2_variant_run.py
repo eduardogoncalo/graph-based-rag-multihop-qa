@@ -2,7 +2,8 @@
 baseline original, pergunta a pergunta.
 
 Fala com scripts/hipporag2_query_runner.py em modo --serve (JSONL por stdin), que
-NÃO escreve no Postgres. Ver plano_opus_tese.md, item B1.
+NÃO escreve no Postgres. Exploratório: as variantes de grafo deduplicado não
+entraram na tese.
 
 A comparação é da LISTA ORDENADA dos cinco documentos, não do conjunto: qualquer
 alteração de ordem obriga a regenerar a resposta daquela pergunta.

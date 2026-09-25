@@ -11,9 +11,8 @@ no lugar da biblioteca — não indexam nada a sério, não precisam do
 `.venvs/hipporag2`, não gastam API e não tocam nos 11.515 documentos do corpus
 completo.
 
-> A amostra é gerada aqui, com vinte documentos, porque o dataset de smoke
-> ainda não existe — é o trabalho 4 da lista do `PLANO_RELEASE.md`. Quando ele
-> existir, `_amostra_pequena` passa a lê-lo em vez de o simular.
+> A amostra é gerada aqui, com vinte documentos, para o teste não depender de
+> dados descarregados.
 """
 
 from __future__ import annotations

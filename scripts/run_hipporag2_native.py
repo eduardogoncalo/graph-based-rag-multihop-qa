@@ -43,7 +43,7 @@ def _bind_dataset(dataset_id: str, dataset_version: str, exp_suffix: str = "") -
     """Rebinda os globals p/ outro dataset (default musique = retrocompatível).
 
     `exp_suffix` desvia a escrita para um experimento novo. Existe para as
-    variantes de grafo deduplicado do plano_opus_tese.md, que não podem
+    variantes de grafo deduplicado (exploratórias, fora da tese), que não podem
     sobrescrever a execução original: com sufixo "first" o destino passa a
     `<ds>_eval1k_hipporag2_native_first`. Sem sufixo o comportamento é o antigo.
     """

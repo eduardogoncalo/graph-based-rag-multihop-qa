@@ -1,13 +1,15 @@
-"""S13 (parcial) — McNemar pareado no Braço A-v1 (strict, judge), com Holm.
+"""Exact paired McNemar on the controlled arm (strict accuracy from the judge), with Holm.
 
-Família PRIMÁRIA pré-definida (metodologia_v1 §Bloco 5): cada substrato de grafo
-vs o baseline denso, no braço A-v1:
-  H1: lightrag_v1free  vs vector_v1free
-  H2: ms_graphrag_v1free vs vector_v1free
-Secundária (exploratória, reportada sem Holm): lightrag vs ms_graphrag.
+Primary family (m = 4, Holm-corrected; Table A.2 of the thesis): each framework
+against the dense baseline, under the same fixed reader:
+  lightrag_v1free    vs vector_v1free
+  ms_graphrag_v1free vs vector_v1free
+  hipporag2_v1free   vs vector_v1free
+  cognee_v1free_k5   vs vector_v1free
+Secondary pairs (exploratory, reported without Holm): see SECONDARY_SUFFIX.
 
-Teste: McNemar EXATO (binomial bicaudal sobre os pares discordantes b,c) —
-Dror et al. (ACL 2018); pareamento por question_id (mesmas 1000 perguntas).
+Test: exact McNemar (two-sided binomial over the discordant pairs b, c), paired
+by question_id over the scoreable items both cells share (Dror et al., ACL 2018).
 strict = answer_correctness_judge == 1.0. Report-only.
 """
 
