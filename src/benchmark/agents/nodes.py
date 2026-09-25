@@ -218,9 +218,23 @@ def _ensure_supported_method(method_id: str) -> None:
         )
 
 
-# Reader "v2" — grounded: answer strictly from retrieved context, abstain
-# instead of guessing. This is the default and the wording is byte-for-byte the
-# instruction shipped since Bloco B; do NOT change it without a new prompt id.
+# Reader "v1" — free: the reader the thesis reports. Every cell of the
+# controlled arm, the dense baseline and the oracle ceiling ran with it (the
+# `*_v1free` experiments; the prompt is reproduced in Appendix B of the thesis).
+# The reader may fall back on parametric knowledge and is not told to abstain.
+# The wording is byte-for-byte the one the thesis ran; do NOT change it without
+# a new prompt id.
+_FREE_READER_INSTRUCTION = (
+    "Instructions: answer the question. Use the retrieved chunks above when they "
+    "help, and otherwise rely on your own knowledge; give your best answer rather "
+    "than declining."
+)
+
+# Reader "v2" — grounded: answer strictly from the retrieved context, and
+# abstain instead of guessing. An ablation, NOT the thesis configuration: its
+# runs were discarded and none of them reached `results/`. It is kept because
+# the SAME scaffold with only this instruction changed is a clean
+# single-variable comparison. Byte-for-byte the original wording.
 _GROUNDED_READER_INSTRUCTION = (
     "Instructions: answer using ONLY the retrieved chunks above. They reflect "
     "the corpus as it was at collection time; when they disagree with what you "
@@ -229,23 +243,27 @@ _GROUNDED_READER_INSTRUCTION = (
     "is insufficient instead of guessing."
 )
 
-# Reader "v1" — free: the SAME scaffold minus the ground-only-in-context
-# restriction. The reader may fall back on parametric knowledge and is not told
-# to abstain. Selected via READER_GROUNDING so the ONLY variable that changes
-# between v1 and v2 is this instruction (single-variable grounding ablation;
-# powers the oracle-v1 quadrant and Fase 3 cell 3.1).
-_FREE_READER_INSTRUCTION = (
-    "Instructions: answer the question. Use the retrieved chunks above when they "
-    "help, and otherwise rely on your own knowledge; give your best answer rather "
-    "than declining."
-)
+READER_GROUNDING_DEFAULT = "v1"
+_FREE_READER_VALUES = frozenset({"v1", "off", "free", "0", "no", "none", "false"})
+_GROUNDED_READER_VALUES = frozenset({"v2", "on", "grounded", "1", "yes", "true"})
 
 
 def reader_grounding_enabled() -> bool:
-    """Whether the reader is grounded (v2, default). READER_GROUNDING in
-    {v1, off, free, 0, no, none} selects the free reader (v1)."""
-    val = os.getenv("READER_GROUNDING", "v2").strip().lower()
-    return val not in {"v1", "off", "free", "0", "no", "none"}
+    """Whether the reader is grounded (v2). The default is the free reader (v1),
+    the thesis configuration.
+
+    READER_GROUNDING in {v1, off, free, 0, no, none, false} (or unset/empty)
+    selects v1; {v2, on, grounded, 1, yes, true} selects v2. Anything else is
+    refused: a typo must not silently run a different experiment."""
+    val = (os.getenv("READER_GROUNDING") or READER_GROUNDING_DEFAULT).strip().lower()
+    if val in _FREE_READER_VALUES:
+        return False
+    if val in _GROUNDED_READER_VALUES:
+        return True
+    raise ValueError(
+        f"READER_GROUNDING={val!r} is not recognised. Use v1 (free reader, the "
+        "thesis configuration) or v2 (grounded reader, an ablation)."
+    )
 
 
 def _retrieval_context_prompt(state: AgentGraphState) -> str:

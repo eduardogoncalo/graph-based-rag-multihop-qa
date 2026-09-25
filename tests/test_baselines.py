@@ -1,3 +1,4 @@
+import pytest
 from benchmark.agents.nodes import AgentNodeRunner, _retrieval_context_prompt
 from benchmark.core.schemas import RetrievalResult
 from benchmark.methods.baselines import (
@@ -69,20 +70,6 @@ def test_zero_shot_uses_closed_book_prompt() -> None:
     assert "ONLY the retrieved chunks" not in prompt
 
 
-def test_oracle_uses_grounded_reader_prompt() -> None:
-    prompt = _retrieval_context_prompt(
-        {
-            "method_id": ORACLE_METHOD_ID,
-            "question": "Who founded the company?",
-            "retrieval_result": retrieve_zero_shot(query="q").model_copy(
-                update={"method_id": ORACLE_METHOD_ID}
-            ),
-        }
-    )
-
-    assert "ONLY the retrieved chunks" in prompt
-
-
 def _oracle_prompt() -> str:
     return _retrieval_context_prompt(
         {
@@ -95,8 +82,28 @@ def _oracle_prompt() -> str:
     )
 
 
-def test_reader_grounding_defaults_to_grounded(monkeypatch) -> None:
+# The instruction of Appendix B of the thesis, verbatim.
+THESIS_READER_INSTRUCTION = (
+    "Instructions: answer the question. Use the retrieved chunks above when they "
+    "help, and otherwise rely on your own knowledge; give your best answer rather "
+    "than declining."
+)
+
+
+def test_reader_grounding_defaults_to_the_thesis_free_reader(monkeypatch) -> None:
     monkeypatch.delenv("READER_GROUNDING", raising=False)
+    prompt = _oracle_prompt()
+    assert THESIS_READER_INSTRUCTION in prompt
+    assert "ONLY the retrieved chunks" not in prompt
+
+
+def test_reader_grounding_empty_means_the_default(monkeypatch) -> None:
+    monkeypatch.setenv("READER_GROUNDING", "")
+    assert THESIS_READER_INSTRUCTION in _oracle_prompt()
+
+
+def test_oracle_uses_grounded_reader_prompt_under_v2(monkeypatch) -> None:
+    monkeypatch.setenv("READER_GROUNDING", "v2")
     prompt = _oracle_prompt()
     assert "ONLY the retrieved chunks" in prompt
     assert "insufficient instead of guessing" in prompt
@@ -112,6 +119,12 @@ def test_reader_grounding_v1_selects_free_reader(monkeypatch) -> None:
     # scaffold (question + chunks block) is preserved so grounding is the
     # single variable that changes vs the grounded reader.
     assert "Retrieved chunks:" in prompt
+
+
+def test_reader_grounding_refuses_unknown_values(monkeypatch) -> None:
+    monkeypatch.setenv("READER_GROUNDING", "v3")
+    with pytest.raises(ValueError, match="READER_GROUNDING"):
+        _oracle_prompt()
 
 
 def test_reader_grounding_off_aliases_map_to_free(monkeypatch) -> None:

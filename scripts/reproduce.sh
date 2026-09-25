@@ -138,16 +138,23 @@ if [ "${MODEL_PROVIDER:-}" != "openai" ]; then
 fi
 log "MODEL_PROVIDER: openai"
 
-# READER_GROUNDING é o interruptor de uma variável só entre os dois braços da
-# dissertação. Posto errado produz-se em silêncio uma experiência diferente com
-# o mesmo nome. Diz-se sempre em voz alta qual é que vai correr.
-export READER_GROUNDING="${READER_GROUNDING:-v2}"
-case "$READER_GROUNDING" in
-  v1|off|free|0|no|none)
-    aviso "READER_GROUNDING=$READER_GROUNDING — FREE reader (arm v1). It may use parametric knowledge and never declines."
+# READER_GROUNDING is the instruction given to the fixed reader of the
+# controlled arm. v1 (free) is the thesis configuration; v2 (grounded) is an
+# ablation whose runs were discarded. Set wrong, it silently produces a
+# different experiment, so the script always says out loud which one runs, and
+# refuses values the code would not recognise.
+export READER_GROUNDING="${READER_GROUNDING:-v1}"
+case "$(printf '%s' "$READER_GROUNDING" | tr '[:upper:]' '[:lower:]')" in
+  v1|off|free|0|no|none|false)
+    LEITOR=v1
+    log "READER_GROUNDING=$READER_GROUNDING — FREE reader (v1), the thesis configuration"
+    ;;
+  v2|on|grounded|1|yes|true)
+    LEITOR=v2
+    aviso "READER_GROUNDING=$READER_GROUNDING — GROUNDED reader (v2), an ablation, NOT the thesis configuration"
     ;;
   *)
-    log "READER_GROUNDING=$READER_GROUNDING — GROUNDED reader (arm v2, the thesis one)"
+    morrer "READER_GROUNDING=$READER_GROUNDING is not recognised. Use v1 (the thesis configuration) or v2 (an ablation)."
     ;;
 esac
 

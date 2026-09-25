@@ -19,7 +19,7 @@ def retrieve(
 ) -> RetrievalResult:
     started = time.perf_counter()
     # Retrieval-only: context building costs embeddings, never a chat call.
-    # The fixed benchmark reader (grounded v2) does the generation.
+    # The fixed benchmark reader (READER_GROUNDING; v1 by default) does the generation.
     command_result = adapter.query_context(query=query, query_method=query_method)
     result = parse_query_output(
         query=query,
