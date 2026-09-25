@@ -164,8 +164,8 @@ sufixo_de() {
 
 titulo() { printf '\n\033[1m== %s ==\033[0m\n' "$*"; }
 log()    { printf '   %s\n' "$*"; }
-aviso()  { printf '   \033[33mAVISO:\033[0m %s\n' "$*"; }
-erro()   { printf '\033[31mERRO:\033[0m %s\n' "$*" >&2; }
+aviso()  { printf '   \033[33mWARNING:\033[0m %s\n' "$*"; }
+erro()   { printf '\033[31mERROR:\033[0m %s\n' "$*" >&2; }
 morrer() { erro "$*"; exit 1; }
 
 # --------------------------------------------------------------------------- #

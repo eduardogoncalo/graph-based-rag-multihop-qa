@@ -1,31 +1,27 @@
 #!/usr/bin/env bash
 #
-# Monta os ambientes Python do benchmark.
+# Builds the benchmark's Python environments.
 #
-# O ambiente principal (.venv) chega para o modo `smoke`. Os três isolados
-# (.venvs/*) só são precisos no modo `full`.
+# The main environment (.venv) is enough for `smoke` mode. The three isolated
+# ones (.venvs/*) are needed for `full` mode and for --protocol thesis.
 #
-# A separação é por INDEXAÇÃO, não por método, e a distinção custou uma noite a
-# perceber:
+# The split follows INDEXING, not method:
 #
-#   * a INDEXAÇÃO do Cognee corre no `.venvs/cognee`, que fixa `neo4j==5.28.4`
-#     — o principal tem o 6.2.0;
-#   * a INDEXAÇÃO e a consulta do HippoRAG 2 correm no `.venvs/hipporag2`, que
-#     puxa torch e transformers e ocupa 7 GB;
-#   * a CLI oficial do Microsoft GraphRAG vive no `.venvs/graphrag`;
-#   * mas a RECUPERAÇÃO do Cognee corre no ambiente PRINCIPAL — o
-#     `methods/cognee/adapter.py` faz `import cognee` directamente, e por isso
-#     o `cognee` está declarado no `pyproject.toml`.
+#   * Cognee INDEXING runs in `.venvs/cognee`, which pins `neo4j==5.28.4`
+#     (the main environment has 6.2.0);
+#   * HippoRAG 2 INDEXING and querying run in `.venvs/hipporag2`, which pulls
+#     torch and transformers and takes 7 GB;
+#   * Microsoft GraphRAG's official CLI lives in `.venvs/graphrag`;
+#   * but Cognee RETRIEVAL runs in the MAIN environment: methods/cognee/adapter.py
+#     does `import cognee` directly, which is why `cognee` is in pyproject.toml.
 #
-# Uso:
-#   ./scripts/bootstrap_envs.sh            # o principal, e mais nada
-#   ./scripts/bootstrap_envs.sh --full     # o principal e os três isolados
+# Usage:
+#   ./scripts/bootstrap_envs.sh            # the main one, nothing else
+#   ./scripts/bootstrap_envs.sh --full     # the main one and the three isolated
 #   ./scripts/bootstrap_envs.sh --only hipporag2
 #
-# Precisa do `uv`. Não é preferência: os quatro ambientes foram criados com ele,
-# cada um sobre um CPython que o próprio `uv` instala — o que dispensa quem
-# recebe o pacote de ter um Python de sistema na versão certa, que é metade dos
-# problemas de "clonei e não corre".
+# Needs `uv`: every environment is built on a CPython that uv installs itself,
+# so no system Python at a particular version is required.
 
 set -euo pipefail
 
@@ -38,8 +34,8 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --full) FULL=1 ;;
     --only) APENAS="${2:-}"; shift ;;
-    -h|--help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *) echo "opção desconhecida: $1" >&2; exit 2 ;;
+    -h|--help) sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
   shift
 done
@@ -47,18 +43,18 @@ done
 # --------------------------------------------------------------------------- #
 
 log() { printf '%s\n' "$*"; }
-erro() { printf 'ERRO: %s\n' "$*" >&2; }
+erro() { printf 'ERROR: %s\n' "$*" >&2; }
 
 if ! command -v uv >/dev/null 2>&1; then
-  erro "o \`uv\` não está no PATH."
+  erro "\`uv\` is not on PATH."
   cat >&2 <<'FIM'
 
-    O uv é um binário único e instala-se sem privilégios:
+    uv is a single binary and installs without privileges:
         curl -LsSf https://astral.sh/uv/install.sh | sh
 
-    Alternativa sem uv: os requirements/*.txt são ficheiros pip normais, e
-    dá para montar cada ambiente com o python certo e `pip install -r`. As
-    versões de Python estão em cada cabeçalho.
+    Without uv: requirements/*.txt are plain pip files; build each
+    environment with the right Python and `pip install -r`. The Python
+    version is in each file's header.
 FIM
   exit 1
 fi
@@ -71,12 +67,12 @@ log "uv: $(uv --version)"
 
 montar_principal() {
   log ""
-  log "=== ambiente principal (.venv) ==="
+  log "=== main environment (.venv) ==="
   if [ -f uv.lock ]; then
     uv sync --frozen
-    log "montado a partir do uv.lock (resolução completa, fixada)"
+    log "built from uv.lock (full, pinned resolution)"
   else
-    erro "uv.lock em falta; a montar a partir do pyproject.toml, sem garantia de versões"
+    erro "uv.lock missing; building from pyproject.toml, with no version guarantee"
     uv sync
   fi
 }
@@ -90,7 +86,7 @@ python_de() {
   case "$1" in
     hipporag2|cognee) echo "3.11" ;;
     graphrag) echo "3.13" ;;
-    *) erro "ambiente desconhecido: $1"; exit 2 ;;
+    *) erro "unknown environment: $1"; exit 2 ;;
   esac
 }
 
@@ -103,7 +99,7 @@ montar_isolado() {
   log ""
   log "=== ${nome} (python ${py}) ==="
   if [ ! -f "$req" ]; then
-    erro "$req em falta"
+    erro "$req is missing"
     return 1
   fi
 
@@ -120,9 +116,9 @@ montar_isolado() {
     graphrag) modulo="graphrag" ;;
   esac
   if "${destino}/bin/python" -c "import ${modulo}" 2>/dev/null; then
-    log "ok: ${modulo} importa em ${destino}"
+    log "ok: ${modulo} imports in ${destino}"
   else
-    erro "${destino} montou mas \`import ${modulo}\` falha"
+    erro "${destino} was built but \`import ${modulo}\` fails"
     return 1
   fi
 }
@@ -139,12 +135,12 @@ else
     done
   else
     log ""
-    log "Só o ambiente principal, que é o que o modo \`smoke\` precisa."
-    log "Para o modo \`full\`: ./scripts/bootstrap_envs.sh --full"
+    log "Only the main environment, which is what \`smoke\` mode needs."
+    log "For \`full\` mode and --protocol thesis: ./scripts/bootstrap_envs.sh --full"
   fi
 fi
 
 log ""
-log "Feito. A seguir:"
-log "  cp .env.example .env    e preencher a OPENAI_API_KEY"
+log "Done. Next:"
+log "  cp .env.example .env    and fill in OPENAI_API_KEY"
 log "  ./scripts/reproduce.sh"
