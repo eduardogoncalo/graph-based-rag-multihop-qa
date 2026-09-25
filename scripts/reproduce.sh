@@ -6,10 +6,21 @@
 #   ./scripts/reproduce.sh --mode full     # all five methods, isolated envs
 #   ./scripts/reproduce.sh --dry-run       # checks everything, spends nothing
 #
-#   ./scripts/reproduce.sh --dataset twowiki_smoke_20   # the other half of the protocol
-#   ./scripts/reproduce.sh --dataset musique --version ans_v1.0_eval1k --mode full
-#                                          # the full protocol: 1000 questions.
+#   ./scripts/reproduce.sh --dataset twowiki_smoke_20   # the other dataset
+#   ./scripts/reproduce.sh --protocol thesis             # the thesis protocol, on the sample
+#   ./scripts/reproduce.sh --dataset musique --version ans_v1.0_eval1k --protocol thesis
+#                                          # the thesis protocol on 1000 questions.
 #                                          # Days, and tens of dollars. See the README.
+#
+# Without --protocol, it runs the controlled arm only: every method retrieves
+# and the fixed reader answers. `--protocol thesis` runs what the thesis ran:
+# the controlled arm, the closed-book and oracle controls, the native arm, the
+# canonical retrieval audit, the judge, the McNemar tests and the consolidation.
+# It implies `--mode full`.
+#
+# Every cell is its own experiment, `<dataset>_eval1k_<cell>` — the names the
+# statistics, the consolidation and results/ use. `--experiment-prefix`
+# replaces `<dataset>_eval1k_`.
 #
 # `--mode` picks WHICH METHODS run; `--dataset` picks HOW MANY QUESTIONS.
 # Different things, and confusing them costs money: `--mode full` over the
@@ -37,34 +48,44 @@ LIMITE=""
 SALTAR_INDEXACAO=0
 DATASET="musique_smoke_20"
 VERSAO="v1"
-EXPERIMENTO=""
+PROTOCOLO=""
+PREFIXO=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --mode) MODO="${2:-}"; shift ;;
     --dataset) DATASET="${2:-}"; shift ;;
     --version) VERSAO="${2:-}"; shift ;;
-    --experiment-id) EXPERIMENTO="${2:-}"; shift ;;
+    --experiment-prefix) PREFIXO="${2:-}"; shift ;;
+    --protocol) PROTOCOLO="${2:-}"; shift ;;
     --limit) LIMITE="${2:-}"; shift ;;
     --dry-run) DRY_RUN=1 ;;
     --skip-index) SALTAR_INDEXACAO=1 ;;
-    -h|--help) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,42p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
   shift
 done
+
+case "$PROTOCOLO" in
+  "") ;;
+  thesis) MODO="full" ;;
+  *) echo "--protocol has to be 'thesis', not '$PROTOCOLO'" >&2; exit 2 ;;
+esac
 
 case "$MODO" in
   smoke|full) ;;
   *) echo "mode has to be 'smoke' or 'full', not '$MODO'" >&2; exit 2 ;;
 esac
 
-# O identificador do experimento deriva do dataset, e a razão não é estética.
-# Dois datasets debaixo do mesmo `experiment_id` misturam-se no Postgres — a
-# selecção de perguntas filtra por dataset, mas o relatório e o juiz agregam por
-# experimento. Já aconteceu com o `--out-tag`, a 2026-08-09, e os ficheiros de
-# sumário colapsaram num só.
-EXPERIMENTO="${EXPERIMENTO:-${DATASET}_${VERSAO}}"
+# One experiment per cell, named `<dataset>_eval1k_<cell>`. The prefix derives
+# from the dataset because two datasets under the same experiment would mix in
+# Postgres (the judge and the report aggregate by experiment), and the
+# `_eval1k_` form is the one the native runners hard-code and the statistics
+# and consolidation scripts expect. On the smoke sample it reads
+# `musique_smoke_20_eval1k_…`, which cannot collide with the thesis's names.
+PREFIXO="${PREFIXO:-${DATASET}_eval1k_}"
+RELATORIOS="artifacts/${DATASET}/reports"
 
 # Que ficheiros brutos é que este dataset precisa, e como se descarregam. As
 # amostras de smoke partilham os ficheiros do dataset completo — o
@@ -93,11 +114,51 @@ else
   # O Microsoft GraphRAG do modo full é o `ms_graphrag` — a implementação
   # oficial em ficheiros, indexada pela CLI do .venvs/graphrag. NÃO é o
   # `ms_graphrag_neo4j`: essa variante não tem cliente vivo, e o adaptador
-  # levanta "live execution is not configured". Ver o PLANO_RELEASE.md.
+  # levanta "live execution is not configured".
   METODOS=(vector_rag lightrag_neo4j ms_graphrag)
   # cognee e hipporag2 não estão na CLI: correm por scripts próprios e
   # despacham para os ambientes isolados.
 fi
+
+# The retrieval parameters of every cell, as the thesis ran them
+# (~/thesis: run_*_v1free.sh and twowiki_arm_a_orchestrator.sh). They decide how
+# much context reaches the reader — 20 documents per question for LightRAG,
+# ~16.6 for Microsoft GraphRAG (Table 2) — so a different value is a different
+# experiment. `run_experiment_batch.py` defaults to 5 for everything.
+topk_de() {
+  case "$1" in
+    vector_rag|hipporag2|cognee) echo 5 ;;
+    lightrag_neo4j) echo 40 ;;     # LightRAG's own default: entity/relation seeds
+    ms_graphrag) echo 20 ;;        # a cut on the local-search context
+    *) echo 5 ;;                   # the controls ignore it
+  esac
+}
+# CHUNK_TOP_K=20 bounds the text chunks LightRAG puts in the context, and is what
+# gives the 20 documents. It is the library's default; pinned against upgrades.
+export CHUNK_TOP_K="${CHUNK_TOP_K:-20}"
+# Temperature 0 everywhere, the judge included, as in the thesis.
+export OPENAI_CHAT_TEMPERATURE="${OPENAI_CHAT_TEMPERATURE:-0.0}"
+
+# The cell a method's controlled run lands in. The names are the thesis's, and
+# the statistics find the cells by them — so a name must never lie about the
+# reader that produced it (see the READER_GROUNDING block).
+sufixo_de() {
+  local sufixo
+  case "$1" in
+    vector_rag) sufixo=vector_v1free ;;
+    lightrag_neo4j) sufixo=lightrag_v1free ;;
+    ms_graphrag) sufixo=ms_graphrag_v1free ;;
+    hipporag2) sufixo=hipporag2_v1free ;;
+    cognee) sufixo=cognee_v1free_k5 ;;
+    single_document_context) sufixo=oracle_gold_v1free ;;
+    zero_shot_no_context) echo closed_book; return ;;
+    *) echo "no cell for method $1" >&2; exit 2 ;;
+  esac
+  if [ "${LEITOR:-v1}" = "v2" ]; then
+    sufixo="${sufixo/v1free/v2grounded}"
+  fi
+  echo "$sufixo"
+}
 
 # --------------------------------------------------------------------------- #
 
@@ -152,6 +213,8 @@ case "$(printf '%s' "$READER_GROUNDING" | tr '[:upper:]' '[:lower:]')" in
   v2|on|grounded|1|yes|true)
     LEITOR=v2
     aviso "READER_GROUNDING=$READER_GROUNDING — GROUNDED reader (v2), an ablation, NOT the thesis configuration"
+    [ "$PROTOCOLO" = "thesis" ] && morrer "--protocol thesis runs the thesis configuration, which is the free reader (v1). Set READER_GROUNDING=v1."
+    aviso "its cells are named *_v2grounded, never *_v1free"
     ;;
   *)
     morrer "READER_GROUNDING=$READER_GROUNDING is not recognised. Use v1 (the thesis configuration) or v2 (an ablation)."
@@ -184,9 +247,18 @@ except LigacaoAoAmbienteOriginalError as erro:
     sys.exit(1)
 FIM
 then
-  morrer "the requested dataset belongs to the original experimental environment"
+  # The brake protects writes. A dry-run writes nothing and touches no service,
+  # so here it only warns — otherwise the full protocol could never be checked
+  # on the machine that has the original environment.
+  if [ "$DRY_RUN" = "1" ]; then
+    aviso "the requested dataset belongs to the original experimental environment;"
+    aviso "a real run would stop here. Continuing because this is a dry-run."
+  else
+    morrer "the requested dataset belongs to the original experimental environment"
+  fi
+else
+  log "dataset allowed on this machine"
 fi
-log "dataset allowed on this machine"
 
 if ! command -v podman >/dev/null 2>&1 && ! command -v docker >/dev/null 2>&1; then
   morrer "neither podman nor docker on PATH. The infrastructure is a compose file."
@@ -221,7 +293,7 @@ fi
 titulo "2. Data"
 # --------------------------------------------------------------------------- #
 
-log "dataset: ${DATASET} ${VERSAO}   experiment: ${EXPERIMENTO}"
+log "dataset: ${DATASET} ${VERSAO}   experiments: ${PREFIXO}<cell>   reports: ${RELATORIOS}"
 
 if [ ! -f "$FICHEIRO_BRUTO" ]; then
   log "raw file missing; downloading ($FAMILIA)"
@@ -234,7 +306,7 @@ fi
 
 # Aviso de custo, antes da primeira chamada paga e não depois. As amostras de
 # smoke custam cêntimos; os datasets completos são outra ordem de grandeza —
-# 1000 perguntas, 4 indexações, 2000 chamadas de juiz.
+# 1000 perguntas por célula, e o juiz corre duas vezes por resposta.
 case "$DATASET" in
   *_smoke_20) ;;
   *)
@@ -467,7 +539,18 @@ titulo "5. Indexing"
 SLUG="$("$PYTHON" -c "
 from benchmark.core.naming import slugify_dataset_version
 print(slugify_dataset_version('$DATASET', '$VERSAO'))")"
-CANONICO="data/canonical/${SLUG}"
+# The canonical directory comes from the dataset config, NOT from the slug: for
+# the complete datasets they differ (`musique_ans_v1.0_eval1k` against the slug
+# `musique_ans_v1_0_eval1k`), and deriving it from the slug pointed the
+# HippoRAG 2 and Cognee indexing at a directory that does not exist.
+CANONICO="$("$PYTHON" - "configs/datasets/${DATASET}.yaml" <<'FIM'
+import sys
+import yaml
+with open(sys.argv[1], encoding="utf-8") as ficheiro:
+    print(yaml.safe_load(ficheiro)["canonical_path"])
+FIM
+)"
+log "canonical directory: $CANONICO"
 
 if [ "$SALTAR_INDEXACAO" = "1" ]; then
   log "--skip-index: skipping"
@@ -520,7 +603,9 @@ print(Neo4jPortRegistry.load().ports_for('cognee', '$SLUG')[0])")" \
 fi
 
 # --------------------------------------------------------------------------- #
-titulo "6. Readers"
+titulo "6. Controlled arm"
+# Every method retrieves and the fixed reader answers. One experiment per cell,
+# with the thesis's top-k.
 # --------------------------------------------------------------------------- #
 
 ARGS_LIMITE=()
@@ -530,45 +615,166 @@ LEITORES=("${METODOS[@]}")
 # O cognee e o hipporag2 não estão na CLI de indexação, mas ESTÃO no despacho
 # de recuperação do run_single — logo, correm pelo mesmo batch runner.
 [ "$MODO" = "full" ] && LEITORES=("${METODOS[@]}" cognee hipporag2)
+# The controls go through the same batch runner and the same reader: the
+# closed-book floor gets no documents, the oracle ceiling gets the gold ones.
+CONTROLOS=()
+[ "$PROTOCOLO" = "thesis" ] && CONTROLOS=(zero_shot_no_context single_document_context)
 
-if [ "$DRY_RUN" = "1" ]; then
-  log "(dry-run) would run the readers for: ${LEITORES[*]}"
-else
-  for metodo in "${LEITORES[@]}"; do
-    log "reader: $metodo"
-    "$PYTHON" scripts/run_experiment_batch.py \
-      --method "$metodo" \
-      --experiment-id "$EXPERIMENTO" \
-      --dataset-id "$DATASET" \
-      --dataset-version "$VERSAO" \
-      "${ARGS_LIMITE[@]}" \
-      || aviso "the $metodo reader failed; the others carry on"
-  done
+# Every judged cell, as "<suffix>", in the order the report prints them.
+CELULAS=()
+
+correr_celula() {
+  local metodo="$1" sufixo topk
+  sufixo="$(sufixo_de "$metodo")" || morrer "no cell for method $metodo"
+  topk="$(topk_de "$metodo")"
+  CELULAS+=("$sufixo")
+  if [ "$DRY_RUN" = "1" ]; then
+    case "$metodo" in
+      zero_shot_no_context|single_document_context)
+        log "(dry-run) $metodo → ${PREFIXO}${sufixo}   reader $LEITOR" ;;
+      *) log "(dry-run) $metodo → ${PREFIXO}${sufixo}   top-k $topk   reader $LEITOR" ;;
+    esac
+    return 0
+  fi
+  log "$metodo → ${PREFIXO}${sufixo} (top-k $topk)"
+  "$PYTHON" scripts/run_experiment_batch.py \
+    --method "$metodo" \
+    --experiment-id "${PREFIXO}${sufixo}" \
+    --dataset-id "$DATASET" \
+    --dataset-version "$VERSAO" \
+    --top-k "$topk" \
+    "${ARGS_LIMITE[@]}" \
+    || aviso "the $metodo cell failed; the others carry on"
+}
+
+for metodo in "${LEITORES[@]}"; do correr_celula "$metodo"; done
+if [ "${#CONTROLOS[@]}" -gt 0 ]; then
+  titulo "6b. Controls"
+  for metodo in "${CONTROLOS[@]}"; do correr_celula "$metodo"; done
+fi
+
+# --------------------------------------------------------------------------- #
+# The native arm: each framework answers with its own pipeline, over the same
+# index. Only under --protocol thesis.
+# --------------------------------------------------------------------------- #
+
+if [ "$PROTOCOLO" = "thesis" ]; then
+  titulo "6c. Native arm"
+  ARGS_DATASET=(--dataset-id "$DATASET" --dataset-version "$VERSAO")
+  CELULAS+=(lightrag_native hipporag2_native ms_graphrag_native cognee_native)
+  if [ "$DRY_RUN" = "1" ]; then
+    log "(dry-run) lightrag_native    ← LightRAG's own answers from ${PREFIXO}lightrag_v1free (no API call)"
+    log "(dry-run) hipporag2_native   ← scripts/run_hipporag2_native.py"
+    log "(dry-run) ms_graphrag_native ← scripts/run_ms_graphrag_native.py --method local"
+    log "(dry-run) cognee_native      ← scripts/run_cognee_native.py, in batches of 150 (a fresh process each)"
+  else
+    # LightRAG generated its native answer during the controlled run; this
+    # copies it into a cell of its own. No API call.
+    "$PYTHON" scripts/etl_lightrag_native.py "${ARGS_DATASET[@]}" --exp-prefix "$PREFIXO" \
+      || aviso "the LightRAG native cell failed"
+    # The native runners name their experiment `<dataset>_eval1k_<m>_native`
+    # themselves; a custom --experiment-prefix does not reach them.
+    [ "$PREFIXO" = "${DATASET}_eval1k_" ] \
+      || aviso "the native runners ignore --experiment-prefix and write to ${DATASET}_eval1k_*_native"
+    # All three run from the main environment, as in the thesis: the adapters
+    # dispatch to the isolated environments themselves.
+    ARGS_NATIVO=(--full "${ARGS_DATASET[@]}")
+    "$PYTHON" scripts/run_hipporag2_native.py "${ARGS_NATIVO[@]}" "${ARGS_LIMITE[@]}" \
+      || aviso "the HippoRAG 2 native cell failed"
+    "$PYTHON" scripts/run_ms_graphrag_native.py "${ARGS_NATIVO[@]}" --method local "${ARGS_LIMITE[@]}" \
+      || aviso "the Microsoft GraphRAG native cell failed"
+    # Cognee's native recall leaks memory on every call (~30 MB per question),
+    # so it runs in batches, a fresh process each, until nothing is left. The
+    # runner resumes by question_id and each call does at most `--limit`.
+    if [ -n "$LIMITE" ]; then
+      "$PYTHON" scripts/run_cognee_native.py "${ARGS_NATIVO[@]}" --limit "$LIMITE" \
+        || aviso "the Cognee native cell failed"
+    else
+      N_PERGUNTAS="$(wc -l < "${CANONICO}/questions.jsonl")"
+      for _ in $(seq 1 $(( N_PERGUNTAS / 150 + 1 ))); do
+        "$PYTHON" scripts/run_cognee_native.py "${ARGS_NATIVO[@]}" --limit 150 \
+          || { aviso "a Cognee native batch failed"; break; }
+      done
+    fi
+  fi
+fi
+
+# --------------------------------------------------------------------------- #
+# The canonical retrieval audit: recall@5, all_gold@5, recall@pool and docs/q,
+# the retrieval metrics of the thesis (Tables 2 and 3).
+# --------------------------------------------------------------------------- #
+
+if [ "$PROTOCOLO" = "thesis" ]; then
+  titulo "6d. Retrieval audit"
+  if [ "$DRY_RUN" = "1" ]; then
+    log "(dry-run) would audit retrieval into ${RELATORIOS}/retrieval_audit_canonic_2026-07.json"
+  else
+    "$PYTHON" scripts/retrieval_audit_canonic.py \
+      --dataset-id "$DATASET" --dataset-version "$VERSAO" \
+      --exp-prefix "$PREFIXO" --reports-dir "$RELATORIOS" \
+      || aviso "the retrieval audit failed"
+  fi
 fi
 
 # --------------------------------------------------------------------------- #
 titulo "7. Judge"
 # --------------------------------------------------------------------------- #
 
-if [ "$DRY_RUN" = "1" ]; then
-  log "(dry-run) would judge experiment $EXPERIMENTO"
-else
-  # Duas opções que não são cosméticas:
-  #
-  # --out-tag tem de ser distinto por dataset. Igual nos dois, os ficheiros de
-  # sumário colapsam num só. Já aconteceu, a 2026-08-09.
-  #
-  # --out-dir porque o valor por omissão do juiz é `artifacts/musique/reports`,
-  # fixo, e escreveria os resultados de qualquer dataset debaixo do nome
-  # `musique`. Passa-se aqui em vez de se corrigir lá: o `run_llm_judge.py` é
-  # dos ficheiros que o plano fecha à alteração, e mudar o chamador consegue o
-  # mesmo sem tocar no que produziu os resultados da dissertação.
+# One judge run per cell. --out-tag is the cell's suffix and --out-dir the
+# dataset's reports directory: `llm_judge_full_<suffix>_summary.json` there is
+# what the consolidation reads. The judge's own default directory is
+# `artifacts/musique/reports`, fixed, so it is always passed.
+for sufixo in "${CELULAS[@]}"; do
+  if [ "$DRY_RUN" = "1" ]; then
+    log "(dry-run) would judge ${PREFIXO}${sufixo} → ${RELATORIOS}/llm_judge_full_${sufixo}_summary.json"
+    continue
+  fi
   "$PYTHON" scripts/run_llm_judge.py \
-    --experiment-id "$EXPERIMENTO" \
+    --experiment-id "${PREFIXO}${sufixo}" \
     --full \
-    --out-tag "${DATASET}_${VERSAO}" \
-    --out-dir "artifacts/${DATASET}_${VERSAO}/reports" \
-    || aviso "the judge failed; the report comes out without strict accuracy"
+    --out-tag "$sufixo" \
+    --out-dir "$RELATORIOS" \
+    || aviso "the judge failed on ${sufixo}; that cell has no strict accuracy"
+done
+
+# --------------------------------------------------------------------------- #
+# Statistics and consolidation, as in the thesis: exact McNemar with Holm per
+# family, then the per-dataset consolidation. Only under --protocol thesis.
+# --------------------------------------------------------------------------- #
+
+if [ "$PROTOCOLO" = "thesis" ]; then
+  titulo "7b. Statistics"
+  ARGS_ESTATISTICA=(--exp-prefix "$PREFIXO" --reports-dir "$RELATORIOS")
+  if [ "$DRY_RUN" = "1" ]; then
+    log "(dry-run) would run mcnemar_v1_arm.py (4 cells against the dense baseline)"
+    log "(dry-run) would run mcnemar_native_arm.py (6 native pairs + 4 native-against-controlled)"
+    log "(dry-run) would run consolidate_p5.py into ${RELATORIOS}"
+  else
+    # No --out-tag: the consolidation reads the fixed names mcnemar_*_2026-07.json.
+    "$PYTHON" scripts/mcnemar_v1_arm.py "${ARGS_ESTATISTICA[@]}" \
+      || aviso "McNemar (controlled arm) failed"
+    "$PYTHON" scripts/mcnemar_native_arm.py "${ARGS_ESTATISTICA[@]}" \
+      || aviso "McNemar (native arm) failed"
+    "$PYTHON" scripts/consolidate_p5.py --reports-dir "$RELATORIOS" \
+      || aviso "the consolidation failed"
+  fi
+  # The cross-dataset consolidation reads artifacts/musique/reports and
+  # artifacts/twowiki/reports, fixed: it only makes sense with both complete
+  # datasets run.
+  case "$DATASET" in
+    musique|twowiki)
+      OUTRO="twowiki"; [ "$DATASET" = "twowiki" ] && OUTRO="musique"
+      if ls "artifacts/${OUTRO}/reports"/consolidated_p5_*.json >/dev/null 2>&1; then
+        if [ "$DRY_RUN" = "1" ]; then
+          log "(dry-run) would run consolidate_cross_dataset.py"
+        else
+          "$PYTHON" scripts/consolidate_cross_dataset.py || aviso "the cross-dataset consolidation failed"
+        fi
+      else
+        log "cross-dataset consolidation: waiting for the ${OUTRO} run"
+      fi
+      ;;
+  esac
 fi
 
 # --------------------------------------------------------------------------- #
@@ -580,13 +786,29 @@ if [ "$DRY_RUN" = "1" ]; then
   exit 0
 fi
 
-"$PYTHON" -m benchmark.cli.app compare --experiment-id "$EXPERIMENTO" || true
-"$PYTHON" -m benchmark.cli.app report --experiment-id "$EXPERIMENTO" || true
+"$PYTHON" - "$RELATORIOS" "${CELULAS[@]}" <<'FIM' || true
+import json
+import sys
+from pathlib import Path
+
+reports, cells = Path(sys.argv[1]), sys.argv[2:]
+print(f"   {'cell':<24} {'n':>5} {'strict':>7} {'refusal':>8}")
+for cell in cells:
+    path = reports / f"llm_judge_full_{cell}_summary.json"
+    if not path.exists():
+        print(f"   {cell:<24} {'—':>5} {'(not judged)':>16}")
+        continue
+    by_method = json.loads(path.read_text())["by_method"]
+    for stats in by_method.values():
+        print(f"   {cell:<24} {stats['n_scoreable']:>5} {stats['strict_accuracy']:>7.3f} "
+              f"{stats['refusal_rate']:>8.3f}")
+FIM
 
 titulo "Done"
 cat <<FIM
-   Mode: $MODO   Dataset: ${DATASET}_${VERSAO}   Experiment: $EXPERIMENTO
-   Reader: READER_GROUNDING=$READER_GROUNDING
+   Mode: $MODO   Protocol: ${PROTOCOLO:-controlled arm only}   Dataset: ${DATASET} ${VERSAO}
+   Experiments: ${PREFIXO}<cell>   Reports: ${RELATORIOS}
+   Reader: READER_GROUNDING=$READER_GROUNDING ($LEITOR)
 
    Low F1 and EM are NOT a fault. Values around F1 ~ 0.09 and EM ~ 0 are an
    artefact of verbosity and of measurement, diagnosed on 2026-06-23. The
