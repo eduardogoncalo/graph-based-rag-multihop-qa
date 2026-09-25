@@ -29,6 +29,17 @@ O segundo não substitui o primeiro: prova que os números publicados são
 aritmeticamente consistentes com o que ficou registado, não que a anotação
 humana foi feita como se diz.
 
+O QUE A TESE REPORTA, E O QUE NÃO
+---------------------------------
+- **Protocolo principal** (120 itens, verificação com o rótulo do juiz à
+  vista): concordância e κ.
+- **Suplemento** (30 itens, cego ao rótulo do juiz, amostrado de propósito
+  por estratos): concordância global e por estrato, **sem κ** (Tabela B.4). A
+  amostra é desbalanceada por desenho, e o próprio `s10_results.json` diz
+  «reportar acordo por estrato, NAO kappa». O κ por dataset continua a ser
+  calculado, porque o `s10_results.json` o regista e a verificação confere-o,
+  mas não é impresso: não é um número da tese.
+
 CONVENÇÃO NUM CASO DEGENERADO
 -----------------------------
 Quando os dois anotadores concordam em tudo **e** usam uma só classe, o κ é
@@ -453,6 +464,42 @@ def verificar_publicados(caminho: Path) -> list[dict]:
 # --------------------------------------------------------------------------- #
 
 
+def resumo_da_tese(resultados: dict[str, dict]) -> list[str]:
+    """The lines the thesis reports (Table B.4), from the recomputed blocks."""
+    principal = [b for nome, b in resultados.items() if not nome.endswith("_" + _SUFIXO_SUPLEMENTO)]
+    suplemento = [b for nome, b in resultados.items() if nome.endswith("_" + _SUFIXO_SUPLEMENTO)]
+    linhas = ["", "As the thesis reports it (Table B.4):"]
+    if principal:
+        n = sum(b["n"] for b in principal)
+        acordo = sum(round(b["acordo"] * b["n"]) for b in principal)
+        kappas = sorted({b["kappa_5"] for b in principal})
+        linhas.append(
+            f"  primary protocol:      {acordo}/{n} agreement ({acordo / n:.1%}), "
+            f"Cohen's κ {', '.join(f'{k:.3f}' for k in kappas)} "
+            "(judge label visible: anchoring may inflate it)"
+        )
+    if suplemento:
+        n = sum(b["n"] for b in suplemento)
+        acordo = sum(round(b["acordo"] * b["n"]) for b in suplemento)
+        recusas = [
+            valores
+            for b in suplemento
+            for estrato, valores in (b.get("por_estrato") or {}).items()
+            if estrato.startswith("refusal")
+        ]
+        texto_recusas = ""
+        if recusas:
+            texto_recusas = (
+                f", {sum(v['acordo'] for v in recusas)}/{sum(v['n'] for v in recusas)} "
+                "on native-arm refusals"
+            )
+        linhas.append(
+            f"  supplement (blind):    {acordo}/{n} agreement ({acordo / n:.1%}){texto_recusas}; "
+            "κ not computed (unbalanced by design)"
+        )
+    return linhas
+
+
 def _travao():
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     from benchmark.infra import guard
@@ -493,9 +540,9 @@ def main() -> int:
                 print(f"    {campo}: {valores}")
         divergem = [e for e in relatorio if e["estado"] == "DIVERGE"]
         if divergem:
-            print(f"\n{len(divergem)} blocos não conferem com o publicado.")
+            print(f"\n{len(divergem)} blocks do not match the published values.")
             return 1
-        print("\nTodos os blocos verificáveis conferem com os valores publicados.")
+        print("\nEvery verifiable block matches the published values.")
         return 0
 
     publicado = json.loads(caminho_resultados.read_text(encoding="utf-8"))["resultados"]
@@ -512,15 +559,22 @@ def main() -> int:
         )
         resultados[nome] = bloco
 
-        print(
-            f"{nome:22} n={bloco['n']:4}  acordo={bloco['acordo']:.4f}  "
-            f"kappa_5={bloco['kappa_5']:.4f}  kappa_bin={bloco['kappa_binario']:.4f}"
-            f"   <- {ficheiro_humano.name}"
-        )
+        if nome.endswith("_" + _SUFIXO_SUPLEMENTO):
+            # The thesis reports no κ for the supplement (Table B.4).
+            print(
+                f"{nome:22} n={bloco['n']:4}  agreement={bloco['acordo']:.4f}  "
+                f"(κ not reported: unbalanced by design)   <- {ficheiro_humano.name}"
+            )
+        else:
+            print(
+                f"{nome:22} n={bloco['n']:4}  agreement={bloco['acordo']:.4f}  "
+                f"kappa_5={bloco['kappa_5']:.4f}  kappa_bin={bloco['kappa_binario']:.4f}"
+                f"   <- {ficheiro_humano.name}"
+            )
         if bloco["so_no_juiz"] or bloco["so_no_humano"]:
             print(
-                f"{'':22} AVISO: {bloco['so_no_juiz']} só na chave do juiz, "
-                f"{bloco['so_no_humano']} só nos rótulos humanos"
+                f"{'':22} WARNING: {bloco['so_no_juiz']} only in the judge key, "
+                f"{bloco['so_no_humano']} only in the human labels"
             )
 
         # Comparação com o publicado. O nome do bloco no s10_results.json é
@@ -531,7 +585,7 @@ def main() -> int:
             chave_publicada = f"principal_{nome}"
         esperado = publicado.get(chave_publicada)
         if esperado is None:
-            print(f"{'':22} (sem bloco publicado com o nome {chave_publicada})")
+            print(f"{'':22} (no published block named {chave_publicada})")
             continue
         diferencas = {
             campo: (esperado[campo], bloco[campo])
@@ -543,9 +597,9 @@ def main() -> int:
                 diferencas["por_estrato"] = (esperado["por_estrato"], bloco["por_estrato"])
         if diferencas:
             divergem.append(chave_publicada)
-            print(f"{'':22} DIVERGE do publicado ({chave_publicada}): {diferencas}")
+            print(f"{'':22} DIFFERS from the published values ({chave_publicada}): {diferencas}")
         else:
-            print(f"{'':22} confere com o publicado ({chave_publicada})")
+            print(f"{'':22} matches the published values ({chave_publicada})")
             if "por_estrato" in bloco:
                 for estrato, valores in sorted(bloco["por_estrato"].items()):
                     print(f"{'':22}   {estrato:24} {valores['acordo']}/{valores['n']}")
@@ -557,12 +611,15 @@ def main() -> int:
             json.dumps({"resultados": resultados}, indent=1, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
-        print(f"\nescrito: {destino}")
+        print(f"\nwritten: {destino}")
+
+    for linha in resumo_da_tese(resultados):
+        print(linha)
 
     if divergem:
-        print(f"\n{len(divergem)} blocos não reproduzem o publicado: {', '.join(divergem)}")
+        print(f"\n{len(divergem)} blocks do not reproduce the published values: {', '.join(divergem)}")
         return 1
-    print("\nTodos os blocos reproduzem os valores publicados.")
+    print("\nEvery block reproduces the published values.")
     return 0
 
 

@@ -8,10 +8,12 @@ Estes testes fazem três coisas distintas, e a distinção importa:
 
 1. **Verificam a aritmética** contra valores calculáveis à mão. Um κ errado que
    devolva um número plausível é pior do que um que rebente.
-2. **Reproduzem os quatro valores publicados a partir dos rótulos brutos** —
-   1,0/1,0 nos blocos principais, 0,877 e 0,8855 nos suplementos — cruzando de
-   novo as chaves do juiz com a anotação humana. É o requisito do plano,
-   cumprido pelo caminho difícil.
+2. **Reproduzem os valores registados no `s10_results.json` a partir dos
+   rótulos brutos** — 1,0/1,0 nos blocos principais, 0,877 e 0,8855 nos
+   suplementos — cruzando de novo as chaves do juiz com a anotação humana.
+   Atenção: a tese só reporta κ no protocolo principal. No suplemento reporta
+   concordância (28/30, 16/16 nas recusas) e diz que o κ não é calculado; os
+   κ do suplemento são conferidos aqui só como consistência do registo.
 3. **Verificam o segundo caminho**, o recálculo a partir das marginais que o
    `s10_results.json` regista, e que os dois caminhos concordam. A redundância
    existe para que um erro num deles não passe.
@@ -167,7 +169,8 @@ def test_reproduz_os_valores_publicados() -> None:
 
 
 def test_os_kappa_dos_suplementos_batem_ao_milesimo() -> None:
-    """Os dois valores que não são triviais: 0,877 e 0,8855."""
+    """Consistência do registo: 0,877 e 0,8855 estão no `s10_results.json`. Não
+    são números da tese, que não calcula κ no suplemento (Tabela B.4)."""
     publicado = json.loads(RESULTADOS.read_text())["resultados"]
     for bloco, esperado in (("suplemento_musique", 0.877), ("suplemento_twowiki", 0.8855)):
         confusao = agreement.confusao_a_partir_do_registo(publicado[bloco])
@@ -402,3 +405,40 @@ def test_os_xlsx_nao_identificam_o_anotador() -> None:
                 f"{caminho.name} tem {etiqueta}={valor!r} — identificação de "
                 "anotador não pode viajar no pacote"
             )
+
+
+def test_o_resumo_diz_o_que_a_tese_reporta() -> None:
+    """Tabela B.4: principal 120/120 e κ 1,000; suplemento 28/30 e 16/16 nas
+    recusas nativas, sem κ."""
+    publicado = json.loads(RESULTADOS.read_text())["resultados"]
+    blocos = {
+        nome: agreement.avaliar(
+            *(
+                {("q%d" % i, "c"): rotulo for i, rotulo in enumerate(lado)}
+                for lado in _lados(publicado[bloco])
+            ),
+        )
+        | ({"por_estrato": publicado[bloco]["por_estrato"]} if "por_estrato" in publicado[bloco] else {})
+        for nome, bloco in (
+            ("musique", "principal_musique"),
+            ("twowiki", "principal_twowiki"),
+            ("musique_supplement", "suplemento_musique"),
+            ("twowiki_supplement", "suplemento_twowiki"),
+        )
+    }
+    linhas = "\n".join(agreement.resumo_da_tese(blocos))
+    assert "120/120 agreement (100.0%), Cohen's κ 1.000" in linhas
+    assert "28/30 agreement (93.3%), 16/16 on native-arm refusals" in linhas
+    assert "κ not computed" in linhas
+    suplemento = next(l for l in linhas.splitlines() if "supplement" in l)
+    assert "0.877" not in suplemento and "0.8855" not in suplemento
+
+
+def _lados(bloco: dict) -> tuple[list[str], list[str]]:
+    """Os rótulos do juiz e do humano, item a item, a partir da matriz registada."""
+    confusao = agreement.confusao_a_partir_do_registo(bloco)
+    juiz, humano = [], []
+    for (rotulo_juiz, rotulo_humano), n in sorted(confusao.items()):
+        juiz += [rotulo_juiz] * n
+        humano += [rotulo_humano] * n
+    return juiz, humano
