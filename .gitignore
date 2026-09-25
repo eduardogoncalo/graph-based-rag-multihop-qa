@@ -42,9 +42,3 @@ logs/
 # Produced by scripts/empacotar_entrega.sh from a commit. Versioning it would
 # mean keeping a copy of the repository inside the repository.
 graph_based_rag_entrega*.zip
-
-# ---- The experiment results ----
-# `results/` is the data that ships with the delivery, not code and not output
-# from this pipeline. It stays out of git — the packager adds it to the zip when
-# it exists — so megabytes of CSV never enter the history.
-results/
