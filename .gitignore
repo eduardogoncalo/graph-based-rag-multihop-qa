@@ -37,8 +37,3 @@ artifacts_variant/
 # ---- Logs ----
 *.log
 logs/
-
-# ---- The delivery zip: a build artefact ----
-# Produced by scripts/empacotar_entrega.sh from a commit. Versioning it would
-# mean keeping a copy of the repository inside the repository.
-graph_based_rag_entrega*.zip
