@@ -107,7 +107,7 @@ duplication:
 - **Option C** is what the **scripts** use — `twowiki_lightrag_index.py`,
   `run_cognee_native.py`, and `run_single.py` for Cognee.
 
-Delete either one and half the package stops working.
+Delete either one and half the pipeline stops working.
 
 **Two operational notes:**
 
@@ -120,9 +120,10 @@ Delete either one and half the package stops working.
 
 ## 4. The three brakes against the original environment
 
-This package was built alongside the machine where the experimental phase ran.
-If you received it on a machine that never had that environment, **none of this
-applies** and the brakes sit inert. That is deliberate.
+This repository was built on the machine where the experimental phase ran, next
+to that environment. On any other machine only the always-refused ports below
+apply, a few that nothing else uses; **everything else stays inert**. That is
+deliberate.
 
 `benchmark.infra.guard` has three checks, one per route in:
 
@@ -133,14 +134,14 @@ applies** and the brakes sit inert. That is deliberate.
 | `exigir_dataset_permitido` | **container names** | `--dataset musique --version ans_v1.0_eval1k`, whose container is the thesis's own |
 
 There are also **two levels of refusal**, and that distinction is what makes the
-package usable by anyone else:
+repository usable by anyone else:
 
-- **always refused** — the 17xxx band and 7689. Those were chosen here, they
+- **always refused** — 17474–17478, 17687–17691 and 7689. Those were chosen here, they
   mean nothing on another machine, and refusing them costs nobody anything;
 - **refused only while the original is present** — Postgres 5432/5433, Neo4j
   7474/7687, and the slugs `musique_ans_v1_0_eval1k` and
-  `twowiki_ans_v1_0_eval1k`. Whoever receives this package has every right to
-  those ports and those datasets.
+  `twowiki_ans_v1_0_eval1k`. On any other machine those ports and datasets are
+  free to use.
 
 The original environment is located either through `BENCHMARK_AMBIENTE_ORIGINAL`
 or by finding a sibling of this repository carrying a signature of four

@@ -2,7 +2,7 @@
 
 **The spreadsheets in this folder were filled in by hand, by the author.** They
 are the human side of the agreement study, and they came out of the original
-experimental run. Nothing in this package regenerates them — running the
+experimental run. Nothing in this repository regenerates them — running the
 pipeline produces judge labels, never the human ones. Treat them as evidence,
 not as output.
 

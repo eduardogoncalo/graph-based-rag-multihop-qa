@@ -100,9 +100,8 @@ These are Tables 3 and 4 of the dissertation. They are rebuilt from
 `validation/` are **evidence from the original run**: the pipeline neither
 reads nor regenerates them, and only the checks in
 [Checking the dissertation](#checking-the-dissertation-against-its-data) use
-them. Your own run produces your own
-numbers, which will differ, because indexing, reading and judging all use
-language models.
+them. Your own run produces your own numbers, which will differ, because
+indexing, reading and judging all use language models.
 
 Most of what a user reads (output, `--help`, reports) is in English. Some code
 comments, internal identifiers, a few messages and the decision record in
@@ -121,15 +120,17 @@ curl -LsSf https://astral.sh/uv/install.sh | sh    # 1. uv
 ./scripts/bootstrap_envs.sh                         # 2. the main environment
 ./scripts/bootstrap_envs.sh --full                  #    plus the three isolated ones
 
-cp .env.example .env && $EDITOR .env                # 3. OPENAI_API_KEY, MODEL_PROVIDER=openai
+cp .env.example .env && $EDITOR .env                # 3. fill in OPENAI_API_KEY
 
 ./scripts/reproduce.sh --dry-run                    # 4. checks everything, spends nothing
 ./scripts/reproduce.sh                              # 5. the smoke run
 ```
 
 `--dry-run` checks the environments, the key, the configuration, the container
-runtime and that the data files are present, without a single paid call. It
-does not start any service. Run it before any paid run.
+runtime and whether the data files are present, without a single paid call. It
+does not start any service. Run it before any paid run. The first real run
+downloads the raw datasets itself, through `scripts/fetch_datasets.py`, and
+checks their sha256.
 
 `reproduce.sh` has independent axes, and confusing them costs money:
 
@@ -214,8 +215,8 @@ complete dataset before letting it run.
 ### What reproduction means here
 
 The pipeline is not deterministic, so a new run reproduces the **protocol**, not
-the numbers. The 20-question sample shows that the chain works. It says nothing about which method is better: at 20 questions, one item
-is five points.
+the numbers. The 20-question sample shows that the chain works. It says
+nothing about which method is better: at 20 questions, one item is five points.
 
 ---
 
